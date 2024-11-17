@@ -1,11 +1,12 @@
 import os
 import time
+import boto3
 from dotenv import load_dotenv
 from LLRunner.slide_processing.dzsave_h5 import dzsave_h5
 from compute_heatmap import create_heatmap_to_h5
 from tqdm import tqdm
-from datetime import datetime, timedelta
-import boto3
+from datetime import datetime, timedelta, timezone
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -42,14 +43,24 @@ def log_put_request():
     logs.append(datetime.utcnow().isoformat())
     upload_put_log(logs)
 
-# Function to count recent PUT requests
 def count_recent_put_requests():
     logs = download_put_log()
-    cutoff_time = datetime.utcnow() - timedelta(hours=24)
-    recent_logs = [log for log in logs if datetime.fromisoformat(log) > cutoff_time]
-    upload_put_log(recent_logs)  # Save only recent logs back to S3
-    print(f"Number Recent PUT requests in the last 24 hours: {len(recent_logs)}")
+    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
+    
+    valid_logs = []
+    for log in logs:
+        try:
+            parsed_log = datetime.fromisoformat(log)
+            valid_logs.append(parsed_log)
+        except ValueError:
+            print(f"Skipping invalid log entry: {log}")
+    
+    recent_logs = [log for log in valid_logs if log > cutoff_time]
+    upload_put_log([log.isoformat() for log in recent_logs])  # Save only recent logs back to S3
+    print(f"Number of Recent PUT requests in the last 24 hours: {len(recent_logs)}")
     return len(recent_logs)
+
+
 
 # Function to count objects (akin to "inodes") in S3 under a specific prefix
 def count_objects_in_s3():
@@ -85,9 +96,9 @@ def upload_to_s3(file_or_dir, s3_prefix=""):
 slide_path = (
     "/media/hdd3/neo/error_slides_ndpi/H19-6490;S10;MSKM - 2023-12-11 21.02.14.ndpi"
 )
-tmp_save_path = "/media/hdd3/neo/S3_tmp_dir/test_slide_3.h5"
+tmp_save_path = "/media/hdd3/neo/S3_tmp_dir/test_slide_4.h5"
 heatmap_h5_save_path = (
-    "/media/hdd3/neo/S3_tmp_dir/heatmaps/test_slide_3_heatmap.h5"
+    "/media/hdd3/neo/S3_tmp_dir/heatmaps/test_slide_4_heatmap.h5"
 )
 
 # Generate DZI files
