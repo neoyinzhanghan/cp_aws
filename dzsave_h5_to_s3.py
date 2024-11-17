@@ -88,6 +88,18 @@ def upload_to_s3(file_or_dir, s3_prefix=""):
     if recent_puts > 200:
         raise Exception(f"Exceeded 200 PUT requests in the last 24 hours. Current count: {recent_puts}")
     
+    # Check if the file exists and how many inodes are being uploaded
+    if not os.path.exists(file_or_dir):
+        raise Exception(f"Path '{file_or_dir}' does not exist.")
+    
+    if os.path.isdir(file_or_dir):
+        files_to_upload = [os.path.join(file_or_dir, f) for f in os.listdir(file_or_dir)]
+
+        print(f"Uploading {len(files_to_upload)} files (inodes/put requests) to S3...")
+
+        if len(files_to_upload) > 100:
+            raise Exception(f"Attempting to upload more than 100 files. Current file count: {len(files_to_upload)}")
+    
     # Upload file to S3
     s3_key = os.path.join(s3_prefix, os.path.basename(file_or_dir)).replace("\\", "/")
     s3.upload_file(file_or_dir, s3_bucket_name, s3_key)
