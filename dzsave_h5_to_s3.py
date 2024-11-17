@@ -81,9 +81,9 @@ def upload_to_s3(file_or_dir, s3_prefix=""):
 slide_path = (
     "/media/hdd3/neo/error_slides_ndpi/H19-6490;S10;MSKM - 2023-12-11 21.02.14.ndpi"
 )
-tmp_save_path = "/media/hdd3/neo/S3_tmp_dir/H19-6490;S10;MSKM - 2023-12-11 21.02.14.h5"
+tmp_save_path = "/media/hdd3/neo/S3_tmp_dir/test_slide_3.h5"
 heatmap_h5_save_path = (
-    "/media/hdd3/neo/S3_tmp_dir/heatmaps/H19-6490;S10;MSKM - 2023-12-11 21.02.14_heatmap.h5"
+    "/media/hdd3/neo/S3_tmp_dir/heatmaps/test_slide_3_heatmap.h5"
 )
 
 # Generate DZI files
