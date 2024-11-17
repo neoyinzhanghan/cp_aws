@@ -56,6 +56,7 @@ def count_objects_in_s3():
     paginator = s3.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=s3_bucket_name, Prefix="")
     object_count = sum(1 for page in pages for _ in page.get("Contents", []))
+    print(f"S3 Bucket Name: {s3_bucket_name}")
     print(f"Number of objects in S3: {object_count}")
     return object_count
 
