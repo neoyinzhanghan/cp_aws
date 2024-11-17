@@ -100,6 +100,14 @@ def upload_to_s3(file_or_dir, s3_prefix=""):
         if len(files_to_upload) > 100:
             raise Exception(f"Attempting to upload more than 100 files. Current file count: {len(files_to_upload)}")
     
+    elif os.path.isfile(file_or_dir):
+        files_to_upload = [file_or_dir]
+
+        print(f"Uploading {len(files_to_upload)} file (inode/put request) to S3...")
+
+        if len(files_to_upload) > 100:
+            raise Exception(f"Attempting to upload more than 100 files. Current file count: {len(files_to_upload)}")
+    
     # Upload file to S3
     s3_key = os.path.join(s3_prefix, os.path.basename(file_or_dir)).replace("\\", "/")
     s3.upload_file(file_or_dir, s3_bucket_name, s3_key)
@@ -110,9 +118,9 @@ def upload_to_s3(file_or_dir, s3_prefix=""):
 slide_path = (
     "/media/hdd3/neo/error_slides_ndpi/H19-6490;S10;MSKM - 2023-12-11 21.02.14.ndpi"
 )
-tmp_save_path = "/media/hdd3/neo/S3_tmp_dir/test_slide_5.h5"
+tmp_save_path = "/media/hdd3/neo/S3_tmp_dir/test_slide_2.h5"
 heatmap_h5_save_path = (
-    "/media/hdd3/neo/S3_tmp_dir/heatmaps/test_slide_5_heatmap.h5"
+    "/media/hdd3/neo/S3_tmp_dir/heatmaps/test_slide_2_heatmap.h5"
 )
 
 # Generate DZI files
