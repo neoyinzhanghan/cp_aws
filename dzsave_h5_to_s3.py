@@ -50,21 +50,22 @@ def count_recent_put_requests():
     upload_put_log(recent_logs)  # Save only recent logs back to S3
     return len(recent_logs)
 
-# Function to count inodes
-def count_inodes():
-    """Count the number of inodes used on the EC2 instance."""
-    result = os.popen("df -i / | tail -1 | awk '{print $3}'").read().strip()
-    return int(result) if result.isdigit() else 0
+# Function to count objects (akin to "inodes") in S3 under a specific prefix
+def count_objects_in_s3(prefix):
+    paginator = s3.get_paginator("list_objects_v2")
+    pages = paginator.paginate(Bucket=s3_bucket_name, Prefix=prefix)
+    object_count = sum(1 for page in pages for _ in page.get("Contents", []))
+    return object_count
 
 # Function to upload a file to S3
 def upload_to_s3(file_or_dir, s3_prefix=""):
     """
-    Upload a file to S3, with checks for iNodes, PUT requests, and number of files.
+    Upload a file to S3, with checks for S3 object count, PUT requests, and number of files.
     """
-    # Check iNodes usage
-    inode_count = count_inodes()
-    if inode_count > 1000:
-        raise Exception(f"iNode limit exceeded on EC2 instance. Current iNodes: {inode_count}")
+    # Check S3 object count under the prefix
+    object_count = count_objects_in_s3(s3_prefix)
+    if object_count > 1000:  # Example limit
+        raise Exception(f"S3 object limit exceeded under prefix '{s3_prefix}'. Current objects: {object_count}")
     
     # Check recent PUT requests
     recent_puts = count_recent_put_requests()

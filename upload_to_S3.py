@@ -50,23 +50,25 @@ def count_recent_put_requests():
     upload_put_log(recent_logs)  # Save only recent logs back to S3
     return len(recent_logs)
 
-def count_inodes():
-    """Count the number of inodes used on the EC2 instance."""
-    result = os.popen("df -i / | tail -1 | awk '{print $3}'").read().strip()
-    return int(result) if result.isdigit() else 0
+def count_objects_in_s3(prefix):
+    """Count the number of objects in S3 under a specific prefix."""
+    paginator = s3_client.get_paginator("list_objects_v2")
+    pages = paginator.paginate(Bucket=S3_BUCKET_NAME, Prefix=prefix)
+    object_count = sum(1 for page in pages for _ in page.get("Contents", []))
+    return object_count
 
 def upload_to_s3(file_or_dir, s3_prefix=""):
     """
-    Upload a file or directory to S3, with checks for iNodes, PUT requests, and number of files.
+    Upload a file or directory to S3, with checks for S3 object count, PUT requests, and number of files.
     
     :param file_or_dir: Path to the file or directory to upload.
     :param s3_prefix: Prefix in the S3 bucket to upload to.
     :return: None or raises an Exception.
     """
-    # Check iNodes usage
-    inode_count = count_inodes()
-    if inode_count > 1000:
-        raise Exception(f"iNode limit exceeded on EC2 instance. Current iNodes: {inode_count}")
+    # Check S3 object count under the prefix
+    object_count = count_objects_in_s3(s3_prefix)
+    if object_count > 1000:  # Example limit
+        raise Exception(f"S3 object limit exceeded under prefix '{s3_prefix}'. Current objects: {object_count}")
     
     # Check recent PUT requests
     recent_puts = count_recent_put_requests()
