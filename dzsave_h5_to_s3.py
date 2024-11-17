@@ -48,13 +48,15 @@ def count_recent_put_requests():
     cutoff_time = datetime.utcnow() - timedelta(hours=24)
     recent_logs = [log for log in logs if datetime.fromisoformat(log) > cutoff_time]
     upload_put_log(recent_logs)  # Save only recent logs back to S3
+    print(f"Number Recent PUT requests in the last 24 hours: {len(recent_logs)}")
     return len(recent_logs)
 
 # Function to count objects (akin to "inodes") in S3 under a specific prefix
-def count_objects_in_s3(prefix):
+def count_objects_in_s3():
     paginator = s3.get_paginator("list_objects_v2")
-    pages = paginator.paginate(Bucket=s3_bucket_name, Prefix=prefix)
+    pages = paginator.paginate(Bucket=s3_bucket_name, Prefix="")
     object_count = sum(1 for page in pages for _ in page.get("Contents", []))
+    print(f"Number of objects in S3: {object_count}")
     return object_count
 
 # Function to upload a file to S3
@@ -63,7 +65,7 @@ def upload_to_s3(file_or_dir, s3_prefix=""):
     Upload a file to S3, with checks for S3 object count, PUT requests, and number of files.
     """
     # Check S3 object count under the prefix
-    object_count = count_objects_in_s3(s3_prefix)
+    object_count = count_objects_in_s3()
     if object_count > 1000:  # Example limit
         raise Exception(f"S3 object limit exceeded under prefix '{s3_prefix}'. Current objects: {object_count}")
     
