@@ -7,7 +7,6 @@ from compute_heatmap import create_heatmap_to_h5
 from tqdm import tqdm
 from datetime import datetime, timedelta, timezone
 
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -40,9 +39,10 @@ def upload_put_log(logs):
 # Function to log a PUT request
 def log_put_request():
     logs = download_put_log()
-    logs.append(datetime.utcnow().isoformat())
+    logs.append(datetime.now(timezone.utc).isoformat())  # Use timezone-aware datetime
     upload_put_log(logs)
 
+# Function to count recent PUT requests
 def count_recent_put_requests():
     logs = download_put_log()
     cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
@@ -50,17 +50,19 @@ def count_recent_put_requests():
     valid_logs = []
     for log in logs:
         try:
+            # Parse logs as datetime and make timezone-aware if needed
             parsed_log = datetime.fromisoformat(log)
+            if parsed_log.tzinfo is None:  # If naive, assume UTC
+                parsed_log = parsed_log.replace(tzinfo=timezone.utc)
             valid_logs.append(parsed_log)
         except ValueError:
             print(f"Skipping invalid log entry: {log}")
     
+    # Filter logs within the last 24 hours
     recent_logs = [log for log in valid_logs if log > cutoff_time]
-    upload_put_log([log.isoformat() for log in recent_logs])  # Save only recent logs back to S3
+    upload_put_log([log.isoformat() for log in recent_logs])  # Save only valid logs
     print(f"Number of Recent PUT requests in the last 24 hours: {len(recent_logs)}")
     return len(recent_logs)
-
-
 
 # Function to count objects (akin to "inodes") in S3 under a specific prefix
 def count_objects_in_s3():
