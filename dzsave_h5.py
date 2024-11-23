@@ -241,7 +241,7 @@ def crop_wsi_images_all_levels(
 
     # Open the WSI to determine the number of levels
     wsi = openslide.OpenSlide(wsi_path)
-    num_levels = len(wsi.leve_count)
+    num_levels = wsi.level_count
     wsi.close()
 
     # Initialize the Ray manager
@@ -294,7 +294,7 @@ def crop_wsi_images_all_levels(
 
 def get_depth_from_0_to_N(wsi_path, h5_path, tile_size=256):
     wsi = openslide.OpenSlide(wsi_path)
-    num_levels = len(wsi.level_count)
+    num_levels = wsi.level_count
 
     # Start at the lowest level and progressively upscale to the highest
     for depth in range(num_levels - 1, -1, -1):
@@ -331,7 +331,7 @@ def dzsave_h5(
     """
     wsi = openslide.OpenSlide(wsi_path)
     width, height = wsi.dimensions
-    num_levels = len(wsi.level_count)
+    num_levels = wsi.level_count
     wsi.close()
 
     initialize_final_h5py_file(
