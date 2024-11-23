@@ -322,7 +322,7 @@ def crop_wsi_images_all_levels(
 
 
 def get_depth_from_0_to_11(wsi_path, h5_path, tile_size=256):
-    # the depth 11 image the the level 7 image from the slide
+    # the depth 11 image the the level top image from the slide
     # each depth decrease is a downsample by factor of 2
 
     # get the depth_11 image
