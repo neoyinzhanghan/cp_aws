@@ -321,11 +321,8 @@ def crop_wsi_images_all_levels(
                     del tasks[done_id]
 
 
-def get_depth_from_0_to_11(wsi_path, h5_path, tile_size=256):
-    # the depth 11 image the the level top image from the slide
-    # each depth decrease is a downsample by factor of 2
+def get_depth_from_0_to_N(wsi_path, h5_path, tile_size=256):
 
-    # get the depth_11 image
     wsi = openslide.OpenSlide(wsi_path)
     level_count = wsi.level_count
 
@@ -340,8 +337,8 @@ def get_depth_from_0_to_11(wsi_path, h5_path, tile_size=256):
         # downsample the image by a factor of 2
         current_image = image.resize(
             (
-                int(max(image.width // (2 ** (11 - depth)), 1)),
-                int(max(image.height // (2 ** (11 - depth)), 1)),
+                int(max(image.width // (2 ** ((18 - level_count + 1) - depth)), 1)),
+                int(max(image.height // (2 ** ((18 - level_count + 1) - depth)), 1)),
             )
         )
         # crop 256x256 patches from the downsampled image (don't overlap, dont leave out any boundary patches)
@@ -408,7 +405,6 @@ def dzsave_h5(
         num_cpus=num_cpus,
     )
     print("Cropping Lower Resolution Levels")
-    get_depth_from_0_to_11(wsi_path, h5_path, tile_size=tile_size)
     time_taken = time.time() - starttime
 
     return time_taken
