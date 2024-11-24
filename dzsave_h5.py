@@ -313,6 +313,7 @@ def crop_wsi_images_all_levels(
                             level = int(18 - wsi_level)
                             f[str(level)][x, y] = jpeg_string
                             print(f"Saved patch at level: {level}, x: {x}, y: {y}")
+                            print(f"jpeg_string: {jpeg_string}")
 
                         pbar.update(len(batch))
 
