@@ -1,6 +1,7 @@
 import time
 import numpy as np
 from PIL import Image
+from tqdm import tqdm
 
 slide_np_path = "/media/hdd3/neo/viewer_sample_huong/website/390359_mask.npy"
 save_dir = "/media/hdd3/neo/viewer_sample_huong/website/test_tmp_dir"
@@ -19,7 +20,14 @@ print(f"Time taken to convert numpy array to image: {time.time() - start_time} s
 
 height, width = slide_img.size
 
-# downsample the image by a factor of 2 and record how long it takes
+# create an image pyramid with 18 levels
 start_time = time.time()
-slide_img_resized = slide_img.resize((width // 2, height // 2))
-print(f"Time taken to resize image: {time.time() - start_time} seconds")
+num_levels = 18
+image_pyramid_dict = {}
+current_img = slide_img
+for i in tqdm(range(num_levels + 1), desc="Creating image pyramid"):
+    level = num_levels - i
+
+    current_img = current_img.resize((width // 2**level, height // 2**level))
+    image_pyramid_dict[level] = current_img
+print(f"Time taken to create image pyramid: {time.time() - start_time} seconds")
