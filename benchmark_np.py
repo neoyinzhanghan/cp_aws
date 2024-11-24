@@ -515,7 +515,7 @@ def dzsave_h5_np(
 if __name__ == "__main__":
     slide_np_path = "/media/hdd3/neo/viewer_sample_huong/website/390359_mask.npy"
     save_dir = "/media/hdd3/neo/viewer_sample_huong/website/test_tmp_dir"
-    h5_path = os.path.join(save_dir, "test_np_dzsave.h5")
+    h5_path = os.path.join(save_dir, "390359_heatmap.h5")
 
     # if the save_dir already exists, delete it
     if os.path.exists(save_dir):
