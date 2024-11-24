@@ -563,20 +563,24 @@ if __name__ == "__main__":
     new_svs_path = "/media/hdd3/neo/viewer_sample_huong/390359_dyadic.svs"
     h5_path = "/media/hdd3/neo/viewer_sample_huong/390359.h5"
 
-    # # if the h5 file already exists, delete it
-    # if os.path.exists(h5_path):
-    #     os.remove(h5_path)
-
-    # dzsave_h5(
-    #     svs_path, h5_path, tile_size=256, num_cpus=32, region_cropping_batch_size=256
-    # )
-
-    start_time = time.time()
-
     dyadically_reorganize_svs_levels(
         svs_path,
         new_svs_path,
     )
+
+    # if the h5 file already exists, delete it
+    if os.path.exists(h5_path):
+        os.remove(h5_path)
+
+    dzsave_h5(
+        new_svs_path,
+        h5_path,
+        tile_size=256,
+        num_cpus=32,
+        region_cropping_batch_size=256,
+    )
+
+    start_time = time.time()
 
     print(
         f"Time taken to dyadically reorganize SVS levels: {time.time() - start_time:.2f} seconds"
