@@ -463,6 +463,8 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
         level_dimensions = slide.level_dimensions
         level_downsamples = slide.level_downsamples
 
+        level_downsamples = [int(downsample) for downsample in level_downsamples]
+
         if mpp_x == 0 or mpp_y == 0:
             print("Warning: MPP values not found in the input file.")
 
