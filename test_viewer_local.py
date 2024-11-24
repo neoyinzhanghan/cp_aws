@@ -11,7 +11,7 @@ CORS(app)
 
 # File paths for testing
 SLIDE_H5_PATH = "/media/hdd3/neo/viewer_sample_huong/390359.h5"
-HEATMAP_H5_PATH = "/media/hdd3/neo/viewer_sample_huong/390359.h5" # _heatmap.h5"
+HEATMAP_H5_PATH = "/media/hdd3/neo/viewer_sample_huong/390359_heatmap.h5"
 TILE_SIZE = 256
 
 # HTML Template for Viewer

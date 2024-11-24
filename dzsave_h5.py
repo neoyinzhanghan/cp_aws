@@ -326,7 +326,7 @@ def get_depth_from_0_to_N(wsi_path, h5_path, tile_size=256):
     wsi = openslide.OpenSlide(wsi_path)
     level_count = wsi.level_count
 
-    assert level_count < 18, "The slide has more than 18 levels"
+    assert level_count <= 18, "The slide has more than 18 levels"
 
     level_top_dimensions = wsi.level_dimensions[level_count - 1]
     image = wsi.read_region((0, 0), level_count - 1, level_top_dimensions)
@@ -396,7 +396,7 @@ def dzsave_h5(
 
     starttime = time.time()
 
-    print("Cropping from NDPI")
+    print("Cropping from WSI using native levels")
     crop_wsi_images_all_levels(
         wsi_path,
         h5_path,
@@ -404,7 +404,10 @@ def dzsave_h5(
         crop_size=tile_size,
         num_cpus=num_cpus,
     )
+
     print("Cropping Lower Resolution Levels")
+    get_depth_from_0_to_N(wsi_path, h5_path, tile_size=tile_size)
+
     time_taken = time.time() - starttime
 
     return time_taken
