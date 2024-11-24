@@ -337,8 +337,8 @@ def get_depth_from_0_to_N(wsi_path, h5_path, tile_size=256):
         # downsample the image by a factor of 2
         current_image = image.resize(
             (
-                int(max(image.width // (2 ** ((18 - level_count + 1) - depth)), 1)),
-                int(max(image.height // (2 ** ((18 - level_count + 1) - depth)), 1)),
+                int(max(image.width // (2 ** ((18 - level_count) - depth)), 1)),
+                int(max(image.height // (2 ** ((18 - level_count) - depth)), 1)),
             )
         )
         # crop 256x256 patches from the downsampled image (don't overlap, dont leave out any boundary patches)
@@ -354,19 +354,17 @@ def get_depth_from_0_to_N(wsi_path, h5_path, tile_size=256):
                 # make sure patch is in RGB mode and a PIL image
                 patch = patch.convert("RGB")
 
-                level = str(depth)
-
                 # Save the patch to the h5 file
                 with h5py.File(h5_path, "a") as f:
                     jpeg_string = image_to_jpeg_string(patch)
                     jpeg_string = encode_image_to_base64(jpeg_string)
                     try:
-                        f[str(level)][
+                        f[str(depth)][
                             int(x // tile_size), int(y // tile_size)
                         ] = jpeg_string
                     except Exception as e:
                         print(
-                            f"Error: {e} occurred while saving patch at level: {level}, x: {x}, y: {y} to {h5_path}"
+                            f"Error: {e} occurred while saving patch at level: {depth}, x: {x}, y: {y} to {h5_path}"
                         )
 
 
