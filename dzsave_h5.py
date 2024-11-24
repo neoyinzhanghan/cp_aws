@@ -431,7 +431,7 @@ def retrieve_tile_h5(h5_path, level, row, col):
 
 if __name__ == "__main__":
     svs_path = "/media/hdd3/neo/viewer_sample_huong/390359.svs"
-    h5_path = "/media/hdd3/neo/S3_tmp_dir/test_slide_2.h5"
+    h5_path = "/media/hdd3/neo/viewer_sample_huong/390359.h5"
 
     # if the h5 file already exists, delete it
     if os.path.exists(h5_path):
