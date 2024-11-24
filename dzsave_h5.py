@@ -436,6 +436,7 @@ import openslide
 from PIL import Image
 import pyvips
 import numpy as np
+import time
 
 
 def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
@@ -447,6 +448,7 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
         input_svs_path (str): Path to the input SVS file.
         output_svs_path (str): Path to save the output SVS file.
     """
+    start_time = time.time()
     try:
         print(f"Starting processing for: {input_svs_path}")
 
@@ -519,6 +521,11 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
                 level_downsamples[level]
             )
 
+        # Validate metadata
+        print("Metadata to be added:")
+        for key, value in metadata.items():
+            print(f"{key}: {value} (type: {type(value)})")
+
         # Save the pyramid as a new SVS file
         print(f"Saving the new SVS file to: {output_svs_path}")
         vips_pyramid.tiffsave(
@@ -526,14 +533,20 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
             tile=True,
             pyramid=True,
             compression="jpeg",
-            tile_width=256,
-            tile_height=256,
+            tile_width=int(256),  # Ensure integers for tile dimensions
+            tile_height=int(256),
             properties=metadata,
         )
         print(f"Reorganized SVS saved successfully to: {output_svs_path}")
 
     except Exception as e:
         print(f"Error processing {input_svs_path}: {e}")
+
+    finally:
+        elapsed_time = time.time() - start_time
+        print(
+            f"Time taken to dyadically reorganize SVS levels: {elapsed_time:.2f} seconds"
+        )
 
 
 if __name__ == "__main__":
