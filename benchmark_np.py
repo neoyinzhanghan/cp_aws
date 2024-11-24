@@ -3,6 +3,7 @@ import io
 import ray
 import time
 import h5py
+import random
 import base64
 import openslide
 import numpy as np
@@ -254,6 +255,94 @@ def get_tile_coordinate_level_pairs(pil_pyramid, tile_size=256):
     return coordinates
 
 
+@ray.remote
+class H5PyramidCropManager:
+    """
+    A class representing a manager that crops PIL.
+    Each Manager object is assigned with a single CPU core and is responsible for cropping a subset of the coordinates from a given PIL.
+
+    Attributes:
+    h5_pyramid_path: path to the h5 file representing the image pyramid.
+    f: h5py.File: the h5 file object.
+    """
+
+    def __init__(self, h5_pyramid_path) -> None:
+        self.h5_pyramid_path = h5_pyramid_path
+        self.f = None
+
+    def open_h5_file(self):
+        """Open the h5 file."""
+        self.f = h5py.File(self.h5_pyramid_path, "r")
+
+    def close_h5_file(self):
+        """Close the h5 file."""
+        self.f.close()
+        self.f = None
+
+    def get_level_N_dimensions(self, dz_level):
+        """Get dimensions of the slide at level N."""
+
+        height, width, _ = self.f[str(dz_level)].shape
+
+        return width, height
+
+    def crop(self, coords, dz_level=0):
+        """Crop the numpy array at the specified level of magnification.
+        coords is TL_x, TL_y, BR_x, BR_y format
+        """
+
+        image = self.f[str(dz_level)][coords[1] : coords[3], coords[0] : coords[2], :]
+
+        # convert the image to PIL image
+        image = Image.fromarray(image)
+
+        return image
+
+    def async_get_jpeg_string_batch(self, coord_level_pair_batch):
+        """Save a list of focus regions."""
+
+        indices_to_jpeg = []
+        for coord_level_pair in coord_level_pair_batch:
+            coord, dz_level = coord_level_pair
+
+            image = self.crop(coord, dz_level)
+
+            jpeg_string = image_to_jpeg_string(image)
+            jpeg_string = encode_image_to_base64(jpeg_string)
+
+            indices_level_jpeg = (coord[0], coord[1], dz_level, jpeg_string)
+
+            indices_to_jpeg.append(indices_level_jpeg)
+
+        return indices_to_jpeg
+
+
+def get_tile_coordinate_level_pairs(pil_pyramid, tile_size=256):
+    """Generate a list of coordinates_leve for 256x256 disjoint patches."""
+
+    coordinates = []
+    for dz_level in pil_pyramid.keys():
+        width, height = pil_pyramid[dz_level].size
+
+        for y in range(0, height, tile_size):
+            for x in range(0, width, tile_size):
+                # Ensure that the patch is within the image boundaries
+
+                coordinates.append(
+                    (
+                        (
+                            x,
+                            y,
+                            min(x + tile_size, width),
+                            min(y + tile_size, height),
+                        ),
+                        dz_level,
+                    )
+                )
+
+    return coordinates
+
+
 def initialize_final_h5py_file(
     h5_path, image_width, image_height, num_levels=18, patch_size=256
 ):
@@ -362,6 +451,18 @@ def dzsave_h5_np(
         image_pyramid_dict, tile_size=tile_size
     )
 
+    # randomly generate a number between 0 and 1000000
+    random_num = random.randint(0, 1000000)
+
+    # the h5_tmp_path is in the save directory as the h5_path, but with tmp_random_num as name
+    h5_tmp_path = os.path.join(os.path.dirname(h5_path), f"tmp_{random_num}.h5")
+
+    print(f"Saving temporary image pyramid to {h5_tmp_path}")
+    print(
+        f"Size (GiB) of the temporary h5 file: {os.path.getsize(h5_tmp_path) / 1e9} GiB"
+    )
+    save_pyramid_to_h5(image_pyramid_dict, h5_tmp_path)
+
     # Initialize the final HDF5 file
     initialize_final_h5py_file(
         h5_path, width, height, num_levels=num_levels, patch_size=tile_size
@@ -374,9 +475,10 @@ def dzsave_h5_np(
     ray.shutdown()
     ray.init(ignore_reinit_error=True)
 
-    task_managers = [
-        PILPyramidCropManager.remote(image_pyramid_dict) for _ in range(num_cpus)
-    ]
+    task_managers = [H5PyramidCropManager.remote(h5_tmp_path) for _ in range(num_cpus)]
+
+    for manager in task_managers:
+        manager.open_h5_file.remote()
 
     tasks = {}
 
@@ -420,58 +522,60 @@ if __name__ == "__main__":
 
     os.makedirs(save_dir, exist_ok=True)
 
-    # Load the numpy arrays
-    start_time = time.time()
-    slide_np = np.load(slide_np_path)
-    print(f"Time taken to load numpy array: {time.time() - start_time} seconds")
-
-    # convert the numpy array to an image
-    start_time = time.time()
-    slide_img = Image.fromarray(slide_np)
-    # make sure the image is in RGB mode
-    slide_img = slide_img.convert("RGB")
-    print(
-        f"Time taken to convert numpy array to image: {time.time() - start_time} seconds"
-    )
-
-    height, width = slide_img.size
-
-    # create an image pyramid with 18 levels
-    start_time = time.time()
-    num_levels = 18
-    image_pyramid_dict = {}
-    current_img = slide_img
-    for i in tqdm(range(num_levels + 1), desc="Creating image pyramid"):
-        level = num_levels - i
-
-        current_img = current_img.resize(
-            (max(1, int(width // 2**i)), max(1, int(height // 2**i)))
-        )
-        image_pyramid_dict[level] = current_img
-    print(f"Time taken to create image pyramid: {time.time() - start_time} seconds")
-
-    # save the image pyramid to an HDF5 file
-    start_time = time.time()
-    h5_path_tmp = os.path.join(save_dir, "tmp.h5")
-    save_pyramid_to_h5(image_pyramid_dict, h5_path_tmp)
-    print(
-        f"Time taken to save image pyramid to HDF5: {time.time() - start_time} seconds"
-    )
-
-    # now test the file size of the h5 file
-    h5_file_size = os.path.getsize(h5_path_tmp)
-
-    print(f"Size of the temporary h5 file: {h5_file_size} bytes")
-
+    # # Load the numpy arrays
     # start_time = time.time()
-    # dzsave_h5_np(
-    #     slide_np_path,
-    #     h5_path=h5_path,
-    #     tile_size=256,
-    #     num_cpus=32,
-    #     region_cropping_batch_size=256,
+    # slide_np = np.load(slide_np_path)
+    # print(f"Time taken to load numpy array: {time.time() - start_time} seconds")
+
+    # # convert the numpy array to an image
+    # start_time = time.time()
+    # slide_img = Image.fromarray(slide_np)
+    # # make sure the image is in RGB mode
+    # slide_img = slide_img.convert("RGB")
+    # print(
+    #     f"Time taken to convert numpy array to image: {time.time() - start_time} seconds"
     # )
 
+    # height, width = slide_img.size
+
+    # # create an image pyramid with 18 levels
+    # start_time = time.time()
+    # num_levels = 18
+    # image_pyramid_dict = {}
+    # current_img = slide_img
+    # for i in tqdm(range(num_levels + 1), desc="Creating image pyramid"):
+    #     level = num_levels - i
+
+    #     current_img = current_img.resize(
+    #         (max(1, int(width // 2**i)), max(1, int(height // 2**i)))
+    #     )
+    #     image_pyramid_dict[level] = current_img
+    # print(f"Time taken to create image pyramid: {time.time() - start_time} seconds")
+
+    # # save the image pyramid to an HDF5 file
+    # start_time = time.time()
+    # h5_path_tmp = os.path.join(save_dir, "tmp.h5")
+    # save_pyramid_to_h5(image_pyramid_dict, h5_path_tmp)
     # print(
-    #     f"H5 file and heatmap created successfully. Time taken: {time.time() - start_time} seconds."
+    #     f"Time taken to save image pyramid to HDF5: {time.time() - start_time} seconds"
     # )
+
+    # # now test the file size of the h5 file
+    # h5_file_size = os.path.getsize(h5_path_tmp)
+
+    # print(f"Size of the temporary h5 file: {h5_file_size} bytes")
+
+    start_time = time.time()
+    dzsave_h5_np(
+        slide_np_path,
+        h5_path=h5_path,
+        tile_size=256,
+        num_cpus=32,
+        region_cropping_batch_size=256,
+    )
+
+    print(
+        f"H5 file and heatmap created successfully. Time taken: {time.time() - start_time} seconds."
+    )
+
+    print(f"Size of the final h5 file: {os.path.getsize(h5_path) / 1e9} GiB")
