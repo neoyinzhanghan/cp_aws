@@ -71,38 +71,6 @@ def create_list_of_batches_from_list(list, batch_size):
     return list_of_batches
 
 
-slide_np_path = "/media/hdd3/neo/viewer_sample_huong/website/390359_mask.npy"
-save_dir = "/media/hdd3/neo/viewer_sample_huong/website/test_tmp_dir"
-
-# Load the numpy arrays
-start_time = time.time()
-slide_np = np.load(slide_np_path)
-print(f"Time taken to load numpy array: {time.time() - start_time} seconds")
-
-# convert the numpy array to an image
-start_time = time.time()
-slide_img = Image.fromarray(slide_np)
-# make sure the image is in RGB mode
-slide_img = slide_img.convert("RGB")
-print(f"Time taken to convert numpy array to image: {time.time() - start_time} seconds")
-
-height, width = slide_img.size
-
-# create an image pyramid with 18 levels
-start_time = time.time()
-num_levels = 18
-image_pyramid_dict = {}
-current_img = slide_img
-for i in tqdm(range(num_levels + 1), desc="Creating image pyramid"):
-    level = num_levels - i
-
-    current_img = current_img.resize(
-        (max(1, int(width // 2**i)), max(1, int(height // 2**i)))
-    )
-    image_pyramid_dict[level] = current_img
-print(f"Time taken to create image pyramid: {time.time() - start_time} seconds")
-
-
 @ray.remote
 class WSICropManager:
     """
@@ -368,7 +336,7 @@ def dzsave_h5_np(
     np_img = Image.fromarray(np_array)
     np_img = np_img.convert("RGB")
 
-    height, width = np_img.size
+    width, height = np_img.size
 
     num_levels = 18
     image_pyramid_dict = {}
@@ -395,6 +363,9 @@ def dzsave_h5_np(
         coordinates_level_pairs, region_cropping_batch_size
     )
 
+    ray.shutdown()
+    ray.init(ignore_reinit_error=True)
+
     task_managers = [
         PILPyramidCropManager.remote(image_pyramid_dict) for _ in range(num_cpus)
     ]
@@ -415,8 +386,71 @@ def dzsave_h5_np(
 
                 for done_id in done_ids:
                     try:
-                        batch =ray.get(done_id)
+                        batch = ray.get(done_id)
                         for indices_jpeg in batch:
                             x, y, dz_level, jpeg_string = indices_jpeg
-                            f[str(dz_level)][y, x] = jpeg_string
-                            
+                            f[str(dz_level)][x, y] = jpeg_string
+
+                        pbar.update(len(batch))
+
+                    except ray.exceptions.RayTaskError as e:
+                        print(f"Task for batch {tasks[done_id]} failed with error: {e}")
+
+                    del tasks[done_id]
+
+    ray.shutdown()
+
+
+if __name__ == "__main__":
+    slide_np_path = "/media/hdd3/neo/viewer_sample_huong/website/390359_mask.npy"
+    save_dir = "/media/hdd3/neo/viewer_sample_huong/website/test_tmp_dir"
+    h5_path = os.path.join(save_dir, "test_np_dzsave.h5")
+
+    # # if the save_dir already exists, delete it
+    # if os.path.exists(save_dir):
+    #     os.system(f"rm -r {save_dir}")
+
+    # os.makedirs(save_dir, exist_ok=True)
+
+    # # Load the numpy arrays
+    # start_time = time.time()
+    # slide_np = np.load(slide_np_path)
+    # print(f"Time taken to load numpy array: {time.time() - start_time} seconds")
+
+    # # convert the numpy array to an image
+    # start_time = time.time()
+    # slide_img = Image.fromarray(slide_np)
+    # # make sure the image is in RGB mode
+    # slide_img = slide_img.convert("RGB")
+    # print(
+    #     f"Time taken to convert numpy array to image: {time.time() - start_time} seconds"
+    # )
+
+    # height, width = slide_img.size
+
+    # # create an image pyramid with 18 levels
+    # start_time = time.time()
+    # num_levels = 18
+    # image_pyramid_dict = {}
+    # current_img = slide_img
+    # for i in tqdm(range(num_levels + 1), desc="Creating image pyramid"):
+    #     level = num_levels - i
+
+    #     current_img = current_img.resize(
+    #         (max(1, int(width // 2**i)), max(1, int(height // 2**i)))
+    #     )
+    #     image_pyramid_dict[level] = current_img
+    # print(f"Time taken to create image pyramid: {time.time() - start_time} seconds")
+
+    start_time = time.time()
+    dzsave_h5_np(
+        slide_np_path,
+        h5_path=h5_path,
+        tile_size=256,
+        num_cpus=32,
+        region_cropping_batch_size=256,
+    )
+
+    print(
+        f"H5 file and heatmap created successfully. Time taken: {time.time() - start_time} seconds."
+    )
