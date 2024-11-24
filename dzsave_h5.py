@@ -521,12 +521,18 @@ if __name__ == "__main__":
     #     svs_path, h5_path, tile_size=256, num_cpus=32, region_cropping_batch_size=256
     # )
 
+    start_time = time.time()
+
     dyadically_reorganize_svs_levels(
         svs_path,
         new_svs_path,
     )
 
-    image = retrieve_tile_h5(h5_path, 18, 93, 81)
+    print(
+        f"Time taken to dyadically reorganize SVS levels: {time.time() - start_time:.2f} seconds"
+    )
 
-    # save the image at /media/hdd3/neo/test.jpeg
-    image.save("/media/hdd3/neo/test_convert.jpeg")
+    # image = retrieve_tile_h5(h5_path, 18, 93, 81)
+
+    # # save the image at /media/hdd3/neo/test.jpeg
+    # image.save("/media/hdd3/neo/test_convert.jpeg")
