@@ -441,7 +441,7 @@ import numpy as np
 def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
     """
     Process an SVS file to reorganize its levels to have a consistent downsampling factor of 2
-    and save the result as a new SVS file.
+    and save the result as a new SVS file with preserved metadata.
 
     Args:
         input_svs_path (str): Path to the input SVS file.
@@ -454,13 +454,26 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
         print("Opening the input SVS file...")
         slide = openslide.OpenSlide(input_svs_path)
 
+        # Retrieve metadata
+        print("Retrieving metadata...")
+        mpp_x = float(slide.properties.get(openslide.PROPERTY_NAME_MPP_X, 0))
+        mpp_y = float(slide.properties.get(openslide.PROPERTY_NAME_MPP_Y, 0))
+        level_dimensions = slide.level_dimensions
+        level_downsamples = slide.level_downsamples
+
+        if mpp_x == 0 or mpp_y == 0:
+            print("Warning: MPP values not found in the input file.")
+
+        print(f"Metadata retrieved: MPP X: {mpp_x}, MPP Y: {mpp_y}")
+        print(f"Level dimensions: {level_dimensions}")
+        print(f"Level downsamples: {level_downsamples}")
+
+        # Read the base level image
         base_level = 0
         print(f"Reading base level: {base_level}")
-        base_image = slide.read_region(
-            (0, 0), base_level, slide.level_dimensions[base_level]
-        )
+        base_image = slide.read_region((0, 0), base_level, level_dimensions[base_level])
         base_image = base_image.convert("RGB")
-        print(f"Base level dimensions: {slide.level_dimensions[base_level]}")
+        print(f"Base level dimensions: {level_dimensions[base_level]}")
 
         # Generate pyramid levels with downsampling factor of 2
         print("Generating pyramid levels with a downsampling factor of 2...")
@@ -492,6 +505,20 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
             print(f"Merging level {idx}...")
             vips_pyramid = vips_pyramid.insert(level, 0, 0)
 
+        # Add metadata to the output file
+        print("Adding metadata to the new SVS file...")
+        metadata = {
+            "openslide.mpp-x": str(mpp_x),
+            "openslide.mpp-y": str(mpp_y),
+            "openslide.level-count": str(len(pyramid)),
+        }
+        for level, dimensions in enumerate(level_dimensions):
+            metadata[f"openslide.level[{level}].width"] = str(dimensions[0])
+            metadata[f"openslide.level[{level}].height"] = str(dimensions[1])
+            metadata[f"openslide.level[{level}].downsample"] = str(
+                level_downsamples[level]
+            )
+
         # Save the pyramid as a new SVS file
         print(f"Saving the new SVS file to: {output_svs_path}")
         vips_pyramid.tiffsave(
@@ -501,6 +528,7 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
             compression="jpeg",
             tile_width=256,
             tile_height=256,
+            properties=metadata,
         )
         print(f"Reorganized SVS saved successfully to: {output_svs_path}")
 
