@@ -432,8 +432,85 @@ def retrieve_tile_h5(h5_path, level, row, col):
         return image
 
 
+import openslide
+from PIL import Image
+import pyvips
+import numpy as np
+
+
+def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
+    """
+    Process an SVS file to reorganize its levels to have a consistent downsampling factor of 2
+    and save the result as a new SVS file.
+
+    Args:
+        input_svs_path (str): Path to the input SVS file.
+        output_svs_path (str): Path to save the output SVS file.
+    """
+    try:
+        print(f"Starting processing for: {input_svs_path}")
+
+        # Open the original SVS file
+        print("Opening the input SVS file...")
+        slide = openslide.OpenSlide(input_svs_path)
+
+        base_level = 0
+        print(f"Reading base level: {base_level}")
+        base_image = slide.read_region(
+            (0, 0), base_level, slide.level_dimensions[base_level]
+        )
+        base_image = base_image.convert("RGB")
+        print(f"Base level dimensions: {slide.level_dimensions[base_level]}")
+
+        # Generate pyramid levels with downsampling factor of 2
+        print("Generating pyramid levels with a downsampling factor of 2...")
+        pyramid = [base_image]
+        current_level = 0
+        while pyramid[-1].size[0] > 1 and pyramid[-1].size[1] > 1:
+            print(f"Processing level {current_level + 1}...")
+            next_level = pyramid[-1].resize(
+                (pyramid[-1].size[0] // 2, pyramid[-1].size[1] // 2), Image.LANCZOS
+            )
+            print(f"Level {current_level + 1} dimensions: {next_level.size}")
+            pyramid.append(next_level)
+            current_level += 1
+
+        print(f"Generated {len(pyramid)} pyramid levels.")
+
+        # Convert PIL images to pyvips images
+        print("Converting pyramid levels to pyvips images...")
+        vips_images = []
+        for idx, img in enumerate(pyramid):
+            print(f"Converting level {idx}...")
+            vips_image = pyvips.Image.new_from_array(np.array(img))
+            vips_images.append(vips_image)
+
+        # Merge the images into a single pyvips pyramid
+        print("Merging all levels into a single pyvips pyramid...")
+        vips_pyramid = vips_images[0]
+        for idx, level in enumerate(vips_images[1:], start=1):
+            print(f"Merging level {idx}...")
+            vips_pyramid = vips_pyramid.insert(level, 0, 0)
+
+        # Save the pyramid as a new SVS file
+        print(f"Saving the new SVS file to: {output_svs_path}")
+        vips_pyramid.tiffsave(
+            output_svs_path,
+            tile=True,
+            pyramid=True,
+            compression="jpeg",
+            tile_width=256,
+            tile_height=256,
+        )
+        print(f"Reorganized SVS saved successfully to: {output_svs_path}")
+
+    except Exception as e:
+        print(f"Error processing {input_svs_path}: {e}")
+
+
 if __name__ == "__main__":
-    # svs_path = "/media/hdd3/neo/viewer_sample_huong/390359.svs"
+    svs_path = "/media/hdd3/neo/viewer_sample_huong/390359.svs"
+    new_svs_path = "/media/hdd3/neo/viewer_sample_huong/390359_dyadic.svs"
     h5_path = "/media/hdd3/neo/viewer_sample_huong/390359.h5"
 
     # # if the h5 file already exists, delete it
@@ -443,6 +520,11 @@ if __name__ == "__main__":
     # dzsave_h5(
     #     svs_path, h5_path, tile_size=256, num_cpus=32, region_cropping_batch_size=256
     # )
+
+    dyadically_reorganize_svs_levels(
+        svs_path,
+        new_svs_path,
+    )
 
     image = retrieve_tile_h5(h5_path, 18, 93, 81)
 
