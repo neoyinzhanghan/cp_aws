@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+from dzsave_h5 import retrieve_tile_h5
 
 slide_h5_path = "/media/hdd3/neo/viewer_sample_huong/390359.h5"
 heatmap_h5_path = "/media/hdd3/neo/viewer_sample_huong/390359_heatmap.h5"
@@ -71,8 +72,47 @@ def track_unfilled_keys(h5_path):
     return default_value_tracker
 
 
+def track_tile_errors(h5_path):
+    """
+    Tracks the number of errors thrown by `retrieve_tile_h5` for each integer level in the HDF5 file.
+
+    Parameters:
+    - h5_path (str): Path to the HDF5 file.
+    - retrieve_tile_h5 (callable): Function to retrieve a tile from the HDF5 file.
+                                   Should accept (h5_path, level, row, col) as parameters.
+
+    Returns:
+    - dict: A dictionary where the keys are levels (integer strings) and the values are the number of errors
+            encountered for that level.
+    """
+    error_tracker = {}
+
+    with h5py.File(h5_path, "r") as f:
+        # Iterate over all integer string keys
+        for level in f.keys():
+            if level.isdigit():  # Check if the key is an integer string
+                level_dataset = f[level]
+                num_rows, num_cols = level_dataset.shape  # Get the shape of the dataset
+                error_count = 0
+
+                # Iterate over all rows and columns
+                for row in range(num_rows):
+                    for col in range(num_cols):
+                        try:
+                            # Call the retrieve_tile_h5 function
+                            retrieve_tile_h5(h5_path, level, row, col)
+                        except Exception as e:
+                            # Increment error count if an exception occurs
+                            error_count += 1
+
+                # Record the error count for the level
+                error_tracker[level] = error_count
+
+    return error_tracker
+
+
 print("Unfilled keys in slide h5:")
-print(track_unfilled_keys(slide_h5_path))
+print(track_tile_errors(slide_h5_path))
 
 print("Unfilled keys in heatmap h5:")
-print(track_unfilled_keys(heatmap_h5_path))
+print(track_tile_errors(heatmap_h5_path))
