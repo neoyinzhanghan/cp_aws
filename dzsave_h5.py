@@ -276,7 +276,7 @@ def crop_wsi_images_all_levels(
     # Get all the coordinates for 256x256 patches
     focus_regions_coordinates = []
 
-    for level in range(0, level_count):
+    for level in range(level_count):
         focus_regions_coordinates.extend(
             ray.get(
                 manager.get_tile_coordinate_level_pairs.remote(
@@ -438,5 +438,5 @@ if __name__ == "__main__":
         os.remove(h5_path)
 
     dzsave_h5(
-        svs_path, h5_path, tile_size=512, num_cpus=32, region_cropping_batch_size=256
+        svs_path, h5_path, tile_size=256, num_cpus=32, region_cropping_batch_size=256
     )
