@@ -55,8 +55,9 @@ HTML_TEMPLATE = """
                     type: "legacy-image-pyramid",
                     getTileUrl: (level, x, y) => `/tile/slide/${level}/${x}/${y}/`,
                     tileSize: 256,
-                    width: 1024, // Replace with actual width
-                    height: 1024 // Replace with actual height
+                    width: 37670, // Replace with actual width
+                    height: 22569 // Replace with actual height
+                    maxLevel: 18
                 }
             }
         });
@@ -69,8 +70,9 @@ HTML_TEMPLATE = """
                     type: "legacy-image-pyramid",
                     getTileUrl: (level, x, y) => `/tile/heatmap/${level}/${x}/${y}/`,
                     tileSize: 256,
-                    width: 1024, // Replace with actual width
-                    height: 1024 // Replace with actual height
+                    width: 37670, // Replace with actual width
+                    height: 22569 // Replace with actual height
+                    maxLevel: 18
                 }
             }
         });
