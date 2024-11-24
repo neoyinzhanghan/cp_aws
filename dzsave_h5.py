@@ -541,6 +541,7 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
 
     except Exception as e:
         print(f"Error processing {input_svs_path}: {e}")
+        raise e
 
     finally:
         elapsed_time = time.time() - start_time
