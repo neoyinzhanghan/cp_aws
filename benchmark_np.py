@@ -499,7 +499,8 @@ def dzsave_h5_np(
                         batch = ray.get(done_id)
                         for indices_jpeg in batch:
                             x, y, dz_level, jpeg_string = indices_jpeg
-                            f[str(dz_level)][x, y] = jpeg_string
+                            i, j = int(x // tile_size), int(y // tile_size)
+                            f[str(dz_level)][i, j] = jpeg_string
 
                         pbar.update(len(batch))
 
