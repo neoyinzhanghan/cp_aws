@@ -1,3 +1,5 @@
+import os
+import sys
 import h5py
 import numpy as np
 from dzsave_h5 import retrieve_tile_h5
@@ -111,8 +113,35 @@ def track_tile_errors(h5_path):
     return error_tracker
 
 
+# Suppress all prints and logs
+def suppress_logs(func, *args, **kwargs):
+    """
+    Suppresses all console outputs during the execution of a function.
+
+    Parameters:
+    - func (callable): The function to execute.
+    - *args: Positional arguments for the function.
+    - **kwargs: Keyword arguments for the function.
+
+    Returns:
+    - The return value of the function.
+    """
+    with open(os.devnull, "w") as devnull:
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        try:
+            sys.stdout = devnull  # Redirect stdout
+            sys.stderr = devnull  # Redirect stderr
+            return func(*args, **kwargs)
+        finally:
+            sys.stdout = old_stdout  # Restore stdout
+            sys.stderr = old_stderr  # Restore stderr
+
+
 print("Unfilled keys in slide h5:")
-print(track_tile_errors(slide_h5_path))
+tracker = suppress_logs(track_tile_errors, slide_h5_path, retrieve_tile_h5)
+print(tracker)
 
 print("Unfilled keys in heatmap h5:")
-print(track_tile_errors(heatmap_h5_path))
+tracker = suppress_logs(track_tile_errors, heatmap_h5_path, retrieve_tile_h5)
+print(tracker)
