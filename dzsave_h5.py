@@ -449,3 +449,4 @@ if __name__ == "__main__":
     image = jpeg_string_to_image(jpeg_string)
 
     # save the image at /media/hdd3/neo/test.jpeg
+    image.save("/media/hdd3/neo/test_convert.jpeg")
