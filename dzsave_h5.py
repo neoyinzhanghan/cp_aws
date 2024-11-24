@@ -509,24 +509,27 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
             print(f"Merging level {idx}...")
             vips_pyramid = vips_pyramid.insert(level, 0, 0)
 
-        # Add metadata to the output file
+        # Add metadata to the new SVS file
         print("Adding metadata to the new SVS file...")
-        metadata = {
+        metadata_description = {
             "openslide.mpp-x": str(mpp_x),
             "openslide.mpp-y": str(mpp_y),
             "openslide.level-count": str(len(pyramid)),
         }
         for level, dimensions in enumerate(level_dimensions):
-            metadata[f"openslide.level[{level}].width"] = str(dimensions[0])
-            metadata[f"openslide.level[{level}].height"] = str(dimensions[1])
-            metadata[f"openslide.level[{level}].downsample"] = str(
+            metadata_description[f"openslide.level[{level}].width"] = str(dimensions[0])
+            metadata_description[f"openslide.level[{level}].height"] = str(
+                dimensions[1]
+            )
+            metadata_description[f"openslide.level[{level}].downsample"] = str(
                 level_downsamples[level]
             )
 
-        # Validate metadata
-        print("Metadata to be added:")
-        for key, value in metadata.items():
-            print(f"{key}: {value} (type: {type(value)})")
+        # Create a metadata string for ImageDescription
+        image_description = "\n".join(
+            f"{k}: {v}" for k, v in metadata_description.items()
+        )
+        print("Metadata string created for ImageDescription.")
 
         # Save the pyramid as a new SVS file
         print(f"Saving the new SVS file to: {output_svs_path}")
@@ -535,9 +538,12 @@ def dyadically_reorganize_svs_levels(input_svs_path, output_svs_path):
             tile=True,
             pyramid=True,
             compression="jpeg",
-            tile_width=int(256),  # Ensure integers for tile dimensions
-            tile_height=int(256),
-            properties=metadata,
+            tile_width=256,
+            tile_height=256,
+            bigtiff=True,
+            properties=False,  # Disable automatic properties writing
+            xres=mpp_x,  # Horizontal resolution
+            yres=mpp_y,  # Vertical resolution
         )
         print(f"Reorganized SVS saved successfully to: {output_svs_path}")
 
