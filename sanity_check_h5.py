@@ -139,9 +139,9 @@ def suppress_logs(func, *args, **kwargs):
 
 
 print("Unfilled keys in slide h5:")
-tracker = suppress_logs(track_tile_errors, slide_h5_path, retrieve_tile_h5)
+tracker = suppress_logs(track_tile_errors, slide_h5_path)
 print(tracker)
 
 print("Unfilled keys in heatmap h5:")
-tracker = suppress_logs(track_tile_errors, heatmap_h5_path, retrieve_tile_h5)
+tracker = suppress_logs(track_tile_errors, heatmap_h5_path)
 print(tracker)
