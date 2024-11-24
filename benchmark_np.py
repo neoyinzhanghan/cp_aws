@@ -456,12 +456,12 @@ def dzsave_h5_np(
 
     # the h5_tmp_path is in the save directory as the h5_path, but with tmp_random_num as name
     h5_tmp_path = os.path.join(os.path.dirname(h5_path), f"tmp_{random_num}.h5")
+    save_pyramid_to_h5(image_pyramid_dict, h5_tmp_path)
 
     print(f"Saving temporary image pyramid to {h5_tmp_path}")
     print(
         f"Size (GiB) of the temporary h5 file: {os.path.getsize(h5_tmp_path) / 1e9} GiB"
     )
-    save_pyramid_to_h5(image_pyramid_dict, h5_tmp_path)
 
     # Initialize the final HDF5 file
     initialize_final_h5py_file(
