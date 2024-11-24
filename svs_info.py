@@ -18,3 +18,10 @@ print(f"mpp_x: {mpp_x}, mpp_y: {mpp_y}")
 level_0_dimensions = wsi.level_dimensions[0]
 
 width, height = level_0_dimensions
+
+for level in range(wsi.level_count):
+    level_dimensions = wsi.level_dimensions[level]
+    level_downsamples = wsi.level_downsamples[level]
+    print(
+        f"Level {level} dimensions: {level_dimensions}, downsample: {level_downsamples}"
+    )
