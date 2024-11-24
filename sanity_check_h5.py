@@ -17,3 +17,4 @@ for key in slide_h5.keys():
 
 for key in heatmap_h5.keys():
     print(f"Heatmap h5 key: {key}, dimensions: {heatmap_h5[key].shape}")
+
