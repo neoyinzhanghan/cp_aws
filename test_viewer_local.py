@@ -5,6 +5,7 @@ from flask import Flask, jsonify, send_file, render_template_string
 import h5py
 from PIL import Image
 from flask_cors import CORS
+from dzsave_h5 import retrieve_tile_h5
 
 app = Flask(__name__)
 CORS(app)
@@ -82,18 +83,6 @@ HTML_TEMPLATE = """
 """
 
 
-def retrieve_tile(h5_path, level, row, col):
-    """Retrieve tile from an HDF5 file."""
-    try:
-        with h5py.File(h5_path, "r") as f:
-            jpeg_string = base64.b64decode(f[str(level)][row, col])
-            image = Image.open(io.BytesIO(jpeg_string))
-            return image
-    except Exception as e:
-        print(f"Error retrieving tile: {e}")
-        return None
-
-
 @app.route("/")
 def index():
     """Serve the main page with viewers for both HDF5 files."""
@@ -103,7 +92,7 @@ def index():
 @app.route("/tile/slide/<int:level>/<int:x>/<int:y>/", methods=["GET"])
 def get_slide_tile(level, x, y):
     """Get a tile from the slide HDF5 file."""
-    tile = retrieve_tile(SLIDE_H5_PATH, level, x, y)
+    tile = retrieve_tile_h5(SLIDE_H5_PATH, level, x, y)
     if tile:
         img_io = io.BytesIO()
         tile.save(img_io, format="JPEG", quality=90)
@@ -115,7 +104,7 @@ def get_slide_tile(level, x, y):
 @app.route("/tile/heatmap/<int:level>/<int:x>/<int:y>/", methods=["GET"])
 def get_heatmap_tile(level, x, y):
     """Get a tile from the heatmap HDF5 file."""
-    tile = retrieve_tile(HEATMAP_H5_PATH, level, x, y)
+    tile = retrieve_tile_h5(HEATMAP_H5_PATH, level, x, y)
     if tile:
         img_io = io.BytesIO()
         tile.save(img_io, format="JPEG", quality=90)
