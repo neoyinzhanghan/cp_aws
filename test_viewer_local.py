@@ -56,7 +56,7 @@ HTML_TEMPLATE = """
                     getTileUrl: (level, x, y) => `/tile/slide/${level}/${x}/${y}/`,
                     tileSize: 256,
                     width: 37670, // Replace with actual width
-                    height: 22569 // Replace with actual height
+                    height: 22569, // Replace with actual height
                     maxLevel: 18
                 }
             }
@@ -71,7 +71,7 @@ HTML_TEMPLATE = """
                     getTileUrl: (level, x, y) => `/tile/heatmap/${level}/${x}/${y}/`,
                     tileSize: 256,
                     width: 37670, // Replace with actual width
-                    height: 22569 // Replace with actual height
+                    height: 22569, // Replace with actual height
                     maxLevel: 18
                 }
             }
