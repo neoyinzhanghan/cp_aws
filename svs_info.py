@@ -1,6 +1,6 @@
 import openslide
 
-svs_path = "/media/hdd3/neo/viewer_sample_huong/390359_new.svs"
+svs_path = "/media/hdd3/neo/viewer_sample_huong/390359_dyadic.svs"
 # svs_path = "/media/hdd3/neo/viewer_test_slide.ndpi"
 
 wsi = openslide.OpenSlide(svs_path)
