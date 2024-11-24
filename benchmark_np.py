@@ -71,6 +71,14 @@ def create_list_of_batches_from_list(list, batch_size):
     return list_of_batches
 
 
+def save_pyramid_to_h5(image_pyramid, h5_path):
+    with h5py.File(h5_path, "w") as h5_file:
+        for level, img_array in tqdm(image_pyramid.items(), desc="Saving to HDF5"):
+            # Save each level as a dataset in the HDF5 file
+            h5_file.create_dataset(name=str(level), data=img_array, compression="gzip")
+    print(f"Image pyramid saved to {h5_path}")
+
+
 @ray.remote
 class WSICropManager:
     """
@@ -412,45 +420,58 @@ if __name__ == "__main__":
 
     os.makedirs(save_dir, exist_ok=True)
 
-    # # Load the numpy arrays
-    # start_time = time.time()
-    # slide_np = np.load(slide_np_path)
-    # print(f"Time taken to load numpy array: {time.time() - start_time} seconds")
+    # Load the numpy arrays
+    start_time = time.time()
+    slide_np = np.load(slide_np_path)
+    print(f"Time taken to load numpy array: {time.time() - start_time} seconds")
 
-    # # convert the numpy array to an image
+    # convert the numpy array to an image
+    start_time = time.time()
+    slide_img = Image.fromarray(slide_np)
+    # make sure the image is in RGB mode
+    slide_img = slide_img.convert("RGB")
+    print(
+        f"Time taken to convert numpy array to image: {time.time() - start_time} seconds"
+    )
+
+    height, width = slide_img.size
+
+    # create an image pyramid with 18 levels
+    start_time = time.time()
+    num_levels = 18
+    image_pyramid_dict = {}
+    current_img = slide_img
+    for i in tqdm(range(num_levels + 1), desc="Creating image pyramid"):
+        level = num_levels - i
+
+        current_img = current_img.resize(
+            (max(1, int(width // 2**i)), max(1, int(height // 2**i)))
+        )
+        image_pyramid_dict[level] = current_img
+    print(f"Time taken to create image pyramid: {time.time() - start_time} seconds")
+
+    # save the image pyramid to an HDF5 file
+    start_time = time.time()
+    h5_path_tmp = os.path.join(save_dir, "tmp.h5")
+    save_pyramid_to_h5(image_pyramid_dict, h5_path_tmp)
+    print(
+        f"Time taken to save image pyramid to HDF5: {time.time() - start_time} seconds"
+    )
+
+    # now test the file size of the h5 file
+    h5_file_size = os.path.getsize(h5_path_tmp)
+
+    print(f"Size of the temporary h5 file: {h5_file_size} bytes")
+
     # start_time = time.time()
-    # slide_img = Image.fromarray(slide_np)
-    # # make sure the image is in RGB mode
-    # slide_img = slide_img.convert("RGB")
-    # print(
-    #     f"Time taken to convert numpy array to image: {time.time() - start_time} seconds"
+    # dzsave_h5_np(
+    #     slide_np_path,
+    #     h5_path=h5_path,
+    #     tile_size=256,
+    #     num_cpus=32,
+    #     region_cropping_batch_size=256,
     # )
 
-    # height, width = slide_img.size
-
-    # # create an image pyramid with 18 levels
-    # start_time = time.time()
-    # num_levels = 18
-    # image_pyramid_dict = {}
-    # current_img = slide_img
-    # for i in tqdm(range(num_levels + 1), desc="Creating image pyramid"):
-    #     level = num_levels - i
-
-    #     current_img = current_img.resize(
-    #         (max(1, int(width // 2**i)), max(1, int(height // 2**i)))
-    #     )
-    #     image_pyramid_dict[level] = current_img
-    # print(f"Time taken to create image pyramid: {time.time() - start_time} seconds")
-
-    start_time = time.time()
-    dzsave_h5_np(
-        slide_np_path,
-        h5_path=h5_path,
-        tile_size=256,
-        num_cpus=32,
-        region_cropping_batch_size=256,
-    )
-
-    print(
-        f"H5 file and heatmap created successfully. Time taken: {time.time() - start_time} seconds."
-    )
+    # print(
+    #     f"H5 file and heatmap created successfully. Time taken: {time.time() - start_time} seconds."
+    # )
