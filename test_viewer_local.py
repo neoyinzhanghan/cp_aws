@@ -10,8 +10,8 @@ app = Flask(__name__)
 CORS(app)
 
 # File paths for testing
-SLIDE_H5_PATH = "/path/to/your/slide.h5"
-HEATMAP_H5_PATH = "/path/to/your/heatmap.h5"
+SLIDE_H5_PATH = "/media/hdd3/neo/viewer_sample_huong/390359.h5"
+HEATMAP_H5_PATH = "/media/hdd3/neo/viewer_sample_huong/390359_heatmap.h5"
 TILE_SIZE = 256
 
 # HTML Template for Viewer
@@ -81,6 +81,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
+
 def retrieve_tile_h5(h5_path, level, row, col):
     with h5py.File(h5_path, "r") as f:
         try:
@@ -92,10 +93,12 @@ def retrieve_tile_h5(h5_path, level, row, col):
             print(f"Error retrieving tile: {e}")
             return None
 
+
 @app.route("/")
 def index():
     """Serve the main page with viewers for both HDF5 files."""
     return render_template_string(HTML_TEMPLATE)
+
 
 @app.route("/tile/slide/<int:level>/<int:x>/<int:y>/", methods=["GET"])
 def get_slide_tile(level, x, y):
@@ -108,6 +111,7 @@ def get_slide_tile(level, x, y):
         return send_file(img_io, mimetype="image/jpeg")
     return "Tile not found", 404
 
+
 @app.route("/tile/heatmap/<int:level>/<int:x>/<int:y>/", methods=["GET"])
 def get_heatmap_tile(level, x, y):
     """Get a tile from the heatmap HDF5 file."""
@@ -118,6 +122,7 @@ def get_heatmap_tile(level, x, y):
         img_io.seek(0)
         return send_file(img_io, mimetype="image/jpeg")
     return "Tile not found", 404
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
