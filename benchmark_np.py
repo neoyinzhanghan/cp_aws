@@ -28,6 +28,6 @@ current_img = slide_img
 for i in tqdm(range(num_levels + 1), desc="Creating image pyramid"):
     level = num_levels - i
 
-    current_img = current_img.resize((width // 2**level, height // 2**level))
+    current_img = current_img.resize((max(1, int(width // 2**level)), max(1, int(height // 2**level))))
     image_pyramid_dict[level] = current_img
 print(f"Time taken to create image pyramid: {time.time() - start_time} seconds")
