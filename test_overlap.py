@@ -117,6 +117,8 @@ def overlay_tiles(slide_tile, heatmap_tile, alpha=0.5):
     slide_tile = slide_tile.convert("RGBA")
     heatmap_tile = heatmap_tile.convert("RGBA")
     blended = Image.blend(slide_tile, heatmap_tile, alpha)
+    # Convert to RGB to remove alpha channel
+    blended = blended.convert("RGB")
     return blended
 
 
