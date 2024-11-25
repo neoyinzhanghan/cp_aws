@@ -513,10 +513,10 @@ def dzsave_h5_np(
 
 
 if __name__ == "__main__":
-    wsi_path = "/media/hdd3/neo/viewer_sample_huong/390359.svs"
-    slide_np_path = "/media/hdd3/neo/viewer_sample_huong/website/390359.npy"
+    wsi_path = "/media/hdd3/neo/test_slide_2.ndpi"
+    slide_np_path = "/media/hdd3/neo/viewer_sample_huong/website/test_slide_2.npy"
     save_dir = "/media/hdd3/neo/viewer_sample_huong/website/test_tmp_dir"
-    h5_path = os.path.join(save_dir, "390359.h5")
+    h5_path = os.path.join(save_dir, "test_slide_2.h5")
 
     # if the save_dir already exists, delete it
     if os.path.exists(save_dir):
@@ -567,19 +567,26 @@ if __name__ == "__main__":
 
     # print(f"Size of the temporary h5 file: {h5_file_size} bytes")
 
+    # print the file size in GiB of the ndpi file
+    print(f"Size of the svs file: {os.path.getsize(wsi_path) / 1e9} GiB")
+
     start_time = time.time()
     # extract the level 0 of the svs file
+    print("Extracting level 0 of the svs file...")
     wsi = openslide.OpenSlide(wsi_path)
     level_0_dimensions = wsi.level_dimensions[0]
     width, height = level_0_dimensions
     level_0_image = wsi.read_region((0, 0), 0, level_0_dimensions)
 
+    print("Converting level 0 to RGB mode...")
     # if not RGB mode, convert to RGB
     if level_0_image.mode != "RGB":
         level_0_image = level_0_image.convert("RGB")
 
+    print(f"Converting level 0 to numpy array...")
     # convert to a numpy array and save it at the save_dir
     level_0_np = np.array(level_0_image)
+    print("Saving level 0 numpy array...")
     np.save(slide_np_path, level_0_np)
 
     print(f"Time taken to save level 0 numpy array: {time.time() - start_time} seconds")
