@@ -429,7 +429,9 @@ def dzsave_h5_np(
 ):
     # Load the numpy array, turn into pil image and then create the image pyramid
     start_time = time.time()
+    print(f"Loading numpy array from {np_path}")
     np_array = np.load(np_path)
+    print(f"Converting numpy array to PIL image")
     np_img = Image.fromarray(np_array)
     np_img = np_img.convert("RGB")
 
@@ -592,6 +594,8 @@ if __name__ == "__main__":
     print(f"Time taken to save level 0 numpy array: {time.time() - start_time} seconds")
 
     start_time = time.time()
+    # create the h5 file from the numpy array
+    print("Creating h5 file from numpy array...")
     dzsave_h5_np(
         slide_np_path,
         h5_path=h5_path,
