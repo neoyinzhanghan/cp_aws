@@ -186,6 +186,75 @@ class WSICropManager:
 
         return indices_to_jpeg
     
+def create_image_pyramid_dct(level_0_image, downsample_factor=2, num_levels=18):
+    """
+    Create an image pyramid using a dictionary to store the images at each level.
+    
+    Args:
+        level_0_image (PIL.Image): The level 0 image of the WSI.
+        downsample_factor (int): The downsample factor for each level.
+        num_levels (int): The number of levels in the image pyramid.
+        
+    Returns:
+        dict: A dictionary containing the images at each level of the image pyramid.
+    """
+
+    start_time = time.time()
+    image_pyramid = {}
+    image_pyramid[0] = level_0_image
+    current_image = level_0_image
+    for level in tqdm(range(num_levels-1, -1, -1), desc="Creating image pyramid"):
+        current_image = current_image.resize((max(current_image.width // downsample_factor, 1), max(current_image.height // downsample_factor, 1)))
+        image_pyramid[level] = current_image
+    
+    print(f"Time taken to create image pyramid: {time.time() - start_time:.2f} seconds")
+
+    return image_pyramid
+
+
+@ray.remote
+class PILPyramidCropManager:
+    """
+    A class representing a manager that crops WSIs.
+    Each Manager object is assigned with a single CPU core and is responsible for cropping a subset of the coordinates from a given WSI.
+
+    Attributes:
+    pil_pyramid_obj_ref: ray.ObjectRef: The reference to the PILPyramid object.
+    pil_pyramid: PILPyramid: The PILPyramid object.
+
+    """
+
+    def __init__(self, pil_pyramid_obj_ref) -> None:
+        self.pil_pyramid_obj_ref = pil_pyramid_obj_ref
+        self.pil_pyramid = ray.get(pil_pyramid_obj_ref)
+
+    def async_get_bma_focus_region_level_pair_batch(
+        self, focus_region_coords_level_pairs, crop_size=256
+    ):
+        """Save a list of focus regions."""
+
+        indices_to_jpeg = []
+        for focus_region_coord_level_pair in focus_region_coords_level_pairs:
+            focus_region_coord, dzsave_level = focus_region_coord_level_pair
+
+            pil_level_image = self.pil_pyramid[dzsave_level]
+
+            image = pil_level_image.crop(focus_region_coord)
+
+            jpeg_string = image_to_jpeg_string(image)
+            jpeg_string = encode_image_to_base64(jpeg_string)
+
+            indices_level_jpeg = (
+                focus_region_coord[0] // crop_size,
+                focus_region_coord[1] // crop_size,
+                dzsave_level,
+                jpeg_string,
+            )
+
+            indices_to_jpeg.append(indices_level_jpeg)
+
+        return indices_to_jpeg
+    
 
 def get_tile_coordinate_level_pairs_level_0(image_width, image_height, tile_size=256):
     """Generate a list of coordinates_leve for tile_sizextile_size disjoint patches."""
@@ -202,6 +271,25 @@ def get_tile_coordinate_level_pairs_level_0(image_width, image_height, tile_size
                 )
             )
 
+    return coordinates
+
+def get_tile_coordinate_level_pairs_all_level_from_pyramid(pyramid, tile_size=256):
+    """Generate a list of coordinates_leve for tile_sizextile_size disjoint patches."""
+    coordinates = []
+
+    for level in pyramid:
+        image_width, image_height = pyramid[level].size
+        for y in range(0, image_height, tile_size):
+            for x in range(0, image_width, tile_size):
+                # Ensure that the patch is within the image boundaries
+
+                coordinates.append(
+                    (
+                        (x, y, min(x + tile_size, image_width), min(y + tile_size, image_height)),
+                        level,
+                    )
+                )
+    
     return coordinates
 
 def initialize_final_h5py_file(
@@ -280,6 +368,71 @@ def initialize_final_h5py_file(
         f["num_levels"][0] = num_levels
         f["overlap"][0] = 0
 
+import time # TODO remove the time profiling eventually once the code is stable
+
+def dzsave(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=256, num_croppers=32):
+
+    wsi = openslide.OpenSlide(wsi_path)
+    image_width, image_height = wsi.dimensions
+
+
+    print("Checkpoint 1: Initialized final h5py file")
+    start_time = time.time()
+    initialize_final_h5py_file(h5_path, image_width, image_height, num_levels, patch_size)
+    print(f"Time taken to initialize final h5py file: {time.time() - start_time:.2f} seconds")
+
+    print("Checkpoint 2: Get tile coordinate level pairs for level 0")
+    start_time = time.time()
+    pyramid = create_image_pyramid_dct(wsi.read_region((0, 0), 0, wsi.dimensions), downsample_factor=2, num_levels=num_levels)
+    pyramid_ref = ray.put(pyramid)
+    print(f"Time taken to create image pyramid: {time.time() - start_time:.2f} seconds")
+
+    print("Checkpoint 3: Get tile coordinate level pairs for all levels")
+    start_time = time.time()
+    tile_coordinate_level_pairs = get_tile_coordinate_level_pairs_all_level_from_pyramid(pyramid, tile_size=patch_size)
+    list_of_batches = create_list_of_batches_from_list(tile_coordinate_level_pairs, batch_size)
+    print(f"Time taken to get tile coordinate level pairs for all levels: {time.time() - start_time:.2f} seconds")
+
+    print("Checkpoint 4: Initialize task managers")
+    start_time = time.time()
+    task_managers = [PILPyramidCropManager.remote(pyramid_ref) for _ in range(num_croppers)]
+
+    tasks = {}
+    print(f"Time taken to initialize task managers: {time.time() - start_time:.2f} seconds")
+
+    print("Checkpoint 5: Start cropping")
+    start_time = time.time()
+    for i, batch in enumerate(list_of_batches):
+        manager = task_managers[i % num_croppers]
+        task = manager.async_get_bma_focus_region_level_pair_batch.remote(
+            batch, crop_size=patch_size
+        )
+        tasks[task] = batch
+
+    with h5py.File(h5_path, "a") as f:
+        with tqdm(
+            total=len(tile_coordinate_level_pairs), desc="Cropping focus regions"
+        ) as pbar:
+            while tasks:
+                done_ids, _ = ray.wait(list(tasks.keys()))
+
+                for done_id in done_ids:
+                    try:
+                        batch = ray.get(done_id)
+                        for indices_jpeg in batch:
+                            x, y, level, jpeg_string = indices_jpeg
+                            f[str(level)][x, y] = jpeg_string
+                            # print(f"Saved patch at level: {level}, x: {x}, y: {y}")
+                            # print(f"jpeg_string: {jpeg_string}")
+
+                        pbar.update(len(batch))
+
+                    except ray.exceptions.RayTaskError as e:
+                        print(f"Task for batch {tasks[done_id]} failed with error: {e}")
+
+                    del tasks[done_id]
+    print(f"Time taken to crop from pyramid and write to h5 storage: {time.time() - start_time:.2f} seconds")
+
 def initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=256, num_croppers=32):
     
     # get the level 0 dimensions as width, height of the wsi at level 0
@@ -338,6 +491,6 @@ if __name__ == "__main__":
         # delete the file
         os.remove(h5_path)
 
-    initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=1024, num_croppers=200)
+    dzsave(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=1024, num_croppers=200)
 
     
