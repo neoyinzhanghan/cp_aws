@@ -78,3 +78,16 @@ if rainbow_heatmap_png_exists:
     rainbow_heatmap_png = Image.open(rainbow_heatmap_path_png)
     rainbow_heatmap_png_dimensions = rainbow_heatmap_png.size
     print(f"Rainbow heatmap PNG dimensions: {rainbow_heatmap_png_dimensions}")
+
+
+############################################################################
+# FILE SIZE ANALYSIS -- in MB
+############################################################################
+
+print(f"WSI file size: {os.path.getsize(wsi_path) / 1024 / 1024:.2f} MB")
+print(f"Coolwarm heatmap file size: {os.path.getsize(coolwarm_heatmap_path_npy) / 1024 / 1024:.2f} MB")
+print(f"Rainbow heatmap file size: {os.path.getsize(rainbow_heatmap_path_npy) / 1024 / 1024:.2f} MB")
+if coolwarm_heatmap_png_exists:
+    print(f"Coolwarm heatmap PNG file size: {os.path.getsize(coolwarm_heatmap_path_png) / 1024 / 1024:.2f} MB")
+if rainbow_heatmap_png_exists:
+    print(f"Rainbow heatmap PNG file size: {os.path.getsize(rainbow_heatmap_path_png) / 1024 / 1024:.2f} MB")
