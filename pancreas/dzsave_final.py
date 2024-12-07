@@ -329,7 +329,6 @@ def initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=18
                         print(f"Task for batch {tasks[done_id]} failed with error: {e}")
 
                     del tasks[done_id]
-    
 
 if __name__ == "__main__":
     wsi_path = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848.svs'
@@ -340,3 +339,5 @@ if __name__ == "__main__":
         os.remove(h5_path)
 
     initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=1024, num_croppers=200)
+
+    
