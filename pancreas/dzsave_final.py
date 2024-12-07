@@ -389,9 +389,6 @@ def dzsave(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=256, num
     start_time = time.time()
     pyramid = create_image_pyramid_dct(wsi.read_region((0, 0), 0, wsi.dimensions), downsample_factor=2, num_levels=num_levels)
     pyramid_ref = ray.put(pyramid)
-    print(type(pyramid_ref))    
-    import sys
-    sys.exit()
     print(f"Time taken to create image pyramid: {time.time() - start_time:.2f} seconds")
 
     print("Checkpoint 3: Get tile coordinate level pairs for all levels")
