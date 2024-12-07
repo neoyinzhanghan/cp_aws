@@ -226,6 +226,10 @@ class PILPyramidCropManager:
 
     def __init__(self, pil_pyramid_obj_ref) -> None:
         self.pil_pyramid_obj_ref = pil_pyramid_obj_ref
+
+        print(type(pil_pyramid_obj_ref))
+        import sys
+        sys.exit()
         self.pil_pyramid = ray.get(pil_pyramid_obj_ref)
 
     def async_get_bma_focus_region_level_pair_batch(
@@ -385,6 +389,9 @@ def dzsave(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=256, num
     start_time = time.time()
     pyramid = create_image_pyramid_dct(wsi.read_region((0, 0), 0, wsi.dimensions), downsample_factor=2, num_levels=num_levels)
     pyramid_ref = ray.put(pyramid)
+    print(type(pyramid_ref))    
+    import sys
+    sys.exit()
     print(f"Time taken to create image pyramid: {time.time() - start_time:.2f} seconds")
 
     print("Checkpoint 3: Get tile coordinate level pairs for all levels")
