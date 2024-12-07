@@ -59,30 +59,30 @@ def create_image_pyramid_dct(level_0_image, downsample_factor=2, num_levels=18):
 
 if __name__ == "__main__":
 
-    from tqdm.auto import tqdm
-    import time
-    import openslide
-
     print("Getting the level 0 image of the WSI...")
     start_time = time.time()
 
-    # Show a spinner while processing
-    with tqdm(desc="Processing", total=1, bar_format="{desc} {elapsed} {bar}") as spinner:
-        wsi = openslide.OpenSlide(wsi_path)
-        level = 0
+    wsi = openslide.OpenSlide(wsi_path)
+    level = 0
 
-        # Get the dimensions of the level 0 image
-        dimensions = wsi.level_dimensions[level]
+    # Get the dimensions of the level 0 image
+    dimensions = wsi.level_dimensions[level]
 
-        # Get the entire level 0 image of the WSI
-        level_0_image = wsi.read_region((0, 0), level, dimensions)
+    # Get the entire level 0 image of the WSI
+    level_0_image = wsi.read_region((0, 0), level, dimensions)
 
-        # If the image is RGBA, convert it to RGB
-        if level_0_image.mode == 'RGBA':
-            level_0_image = level_0_image.convert('RGB')
-
-        wsi.close()
-        spinner.update(1)  # Mark spinner as complete
+    # If the image is RGBA, convert it to RGB
+    if level_0_image.mode == 'RGBA':
+        level_0_image = level_0_image.convert('RGB')
 
     print("Done getting the level 0 image.")
     print(f"Time taken: {time.time() - start_time:.2f} seconds")
+
+    print("Creating the image pyramid...")
+    start_time = time.time()    
+
+    image_pyramid = create_image_pyramid_dct(level_0_image, downsample_factor=2, num_levels=18)
+
+    print("Done creating the image pyramid.")
+    print(f"Time taken: {time.time() - start_time:.2f} seconds")
+    
