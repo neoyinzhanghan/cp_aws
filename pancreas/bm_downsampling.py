@@ -59,12 +59,15 @@ def create_image_pyramid_dct(level_0_image, downsample_factor=2, num_levels=18):
 
 if __name__ == "__main__":
 
-    # Getting the level 0 image of the WSI
+    from tqdm.auto import tqdm
+    import time
+    import openslide
+
     print("Getting the level 0 image of the WSI...")
     start_time = time.time()
 
     # Show a spinner while processing
-    with tqdm(desc="Processing", total=1, bar_format="{l_bar}{spinner}", colour="blue") as spinner:
+    with tqdm(desc="Processing", total=1, bar_format="{desc} {elapsed} {bar}") as spinner:
         wsi = openslide.OpenSlide(wsi_path)
         level = 0
 
@@ -82,17 +85,4 @@ if __name__ == "__main__":
         spinner.update(1)  # Mark spinner as complete
 
     print("Done getting the level 0 image.")
-    print(f"Time taken: {time.time() - start_time:.2f} seconds")
-
-    # Creating the image pyramid
-    print("Creating the image pyramid...")
-    start_time = time.time()  # Reset start_time for this operation
-
-    # Show a spinning wheel while the pyramid is being created
-    with tqdm(desc="Processing", total=1, bar_format="{l_bar}{spinner}", colour="green") as spinner:
-        # Simulate the creation of an image pyramid
-        image_pyramid = create_image_pyramid_dct(level_0_image)
-        spinner.update(1)  # Complete the spinner
-
-    print("Image pyramid created.")
     print(f"Time taken: {time.time() - start_time:.2f} seconds")
