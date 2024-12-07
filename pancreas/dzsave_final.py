@@ -484,8 +484,8 @@ def initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=18
                     del tasks[done_id]
 
 if __name__ == "__main__":
-    wsi_path = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848.svs'
-    h5_path = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848.h5'
+    wsi_path = '/media/ssd2/neo/cp_aws_playground/test.svs'
+    h5_path = '/media/ssd2/neo/cp_aws_playground/test.h5'
 
     if os.path.exists(h5_path):
         # delete the file
