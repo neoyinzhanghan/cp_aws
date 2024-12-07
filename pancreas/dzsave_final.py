@@ -339,4 +339,4 @@ if __name__ == "__main__":
         # delete the file
         os.remove(h5_path)
 
-    initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path)
+    initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=256, num_croppers=200)
