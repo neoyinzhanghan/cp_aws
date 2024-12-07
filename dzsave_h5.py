@@ -339,8 +339,8 @@ def get_depth_from_0_to_N(wsi_path, h5_path, tile_size=256):
         # downsample the image by a factor of 2
         current_image = image.resize(
             (
-                int(max(image.width // (2 ** ((18 - level_count) - depth)), 1)),
-                int(max(image.height // (2 ** ((18 - level_count) - depth)), 1)),
+                int(max(image.width // (2 ** ((18 - level_count + 1) - depth)), 1)),
+                int(max(image.height // (2 ** ((18 - level_count + 1) - depth)), 1)),
             )
         )
         # crop 256x256 patches from the downsampled image (don't overlap, dont leave out any boundary patches)
