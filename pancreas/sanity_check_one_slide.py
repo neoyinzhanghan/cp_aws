@@ -68,16 +68,16 @@ print(f"Rainbow heatmap PNG exists: {rainbow_heatmap_png_exists}")
 
 # now get the dimension of the PNG files
 
-if coolwarm_heatmap_png_exists:
-    coolwarm_heatmap_png = Image.open(coolwarm_heatmap_path_png)
-    coolwarm_heatmap_png_dimensions = coolwarm_heatmap_png.size
-    print(f"Coolwarm heatmap PNG dimensions: {coolwarm_heatmap_png_dimensions}")
-    coolwarm_heatmap_png.close()   
+# if coolwarm_heatmap_png_exists:
+#     coolwarm_heatmap_png = Image.open(coolwarm_heatmap_path_png)
+#     coolwarm_heatmap_png_dimensions = coolwarm_heatmap_png.size
+#     print(f"Coolwarm heatmap PNG dimensions: {coolwarm_heatmap_png_dimensions}")
+#     coolwarm_heatmap_png.close()   
 
-if rainbow_heatmap_png_exists:
-    rainbow_heatmap_png = Image.open(rainbow_heatmap_path_png)
-    rainbow_heatmap_png_dimensions = rainbow_heatmap_png.size
-    print(f"Rainbow heatmap PNG dimensions: {rainbow_heatmap_png_dimensions}")
+# if rainbow_heatmap_png_exists:
+#     rainbow_heatmap_png = Image.open(rainbow_heatmap_path_png)
+#     rainbow_heatmap_png_dimensions = rainbow_heatmap_png.size
+#     print(f"Rainbow heatmap PNG dimensions: {rainbow_heatmap_png_dimensions}")
 
 
 ############################################################################
