@@ -78,6 +78,11 @@ for svs_file in tqdm(svs_files_to_keep, desc="Tiling SVS Files"):
     metadata_dict["svs_file_size_mb"].append(svs_file_size_mb)
     metadata_dict["h5_file_size_mb"].append(h5_file_size_mb)
 
+    print(f"Finished tiling {svs_file} to {h5_file}")
+    print(f"Time taken: {tiling_time:.2f} seconds")
+    print(f"SVS file size: {svs_file_size_mb:.2f} MB")
+    print(f"H5 file size: {h5_file_size_mb:.2f} MB")
+
 # create a DataFrame from the metadata dictionary
 metadata_df = pd.DataFrame(metadata_dict)
 
