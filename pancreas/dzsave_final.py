@@ -298,7 +298,7 @@ def get_tile_coordinate_level_pairs_all_level_from_pyramid(pyramid, tile_size=25
     return coordinates
 
 def initialize_final_h5py_file(
-    h5_path, image_width, image_height, num_levels=18, patch_size=256
+    h5_path, image_width, image_height, num_levels=19, patch_size=256
 ):
     """
     Create an HDF5 file with a dataset that stores tiles, indexed by row and column.
@@ -318,7 +318,7 @@ def initialize_final_h5py_file(
     # Create the HDF5 file and dataset
     with h5py.File(h5_path, "w") as f:
         # Create dataset with shape (num_tile_rows, num_tile_columns, patch_size, patch_size, 3)
-        for level in range(num_levels + 1):
+        for level in range(num_levels):
             level_image_height = image_height / (2 ** (num_levels - level))
             level_image_width = image_width / (2 ** (num_levels - level))
 
@@ -438,7 +438,7 @@ def dzsave(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=256, num
                     del tasks[done_id]
     print(f"Time taken to crop from pyramid and write to h5 storage: {time.time() - start_time:.2f} seconds")
 
-def initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=256, num_croppers=32):
+def initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=32):
     
     # get the level 0 dimensions as width, height of the wsi at level 0
     wsi = openslide.OpenSlide(wsi_path)
