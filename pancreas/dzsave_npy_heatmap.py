@@ -280,6 +280,8 @@ def store_top_level_tiles(npy_path, heatmap_h5_path, batch_size=1024, num_croppe
                         batch = ray.get(done_id)
                         for indices_jpeg in batch:
                             x, y, dzsave_level, jpeg_string = indices_jpeg
+
+                            assert dzsave_level == 18
                             try:
                                 f[str(dzsave_level)][x, y] = jpeg_string
                             except Exception as e:
