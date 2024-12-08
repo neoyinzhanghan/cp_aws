@@ -375,7 +375,7 @@ def initialize_final_h5py_file(
 
 import time # TODO remove the time profiling eventually once the code is stable
 
-def dzsave(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=256, num_croppers=32):
+def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=32):
 
     wsi = openslide.OpenSlide(wsi_path)
     image_width, image_height = wsi.dimensions
@@ -496,4 +496,4 @@ if __name__ == "__main__":
         # delete the file
         os.remove(h5_path)
 
-    dzsave(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=1024, num_croppers=200)
+    dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=1024, num_croppers=200)
