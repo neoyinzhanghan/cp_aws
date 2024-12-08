@@ -114,7 +114,7 @@ def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path):
         f["num_levels"][0] = num_levels
         f["overlap"][0] = overlap
 
-    store_top_level_tiles(npy_path, heatmap_h5_path, num_levels=num_levels, patch_size=patch_size)
+    store_top_level_tiles(npy_path, heatmap_h5_path)
 
     # pyramid = create_image_pyramid_dct_from_numpy(...)
 
