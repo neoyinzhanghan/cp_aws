@@ -455,7 +455,7 @@ def initialize_final_h5py_file(
 
 import time # TODO remove the time profiling eventually once the code is stable
 
-def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=32):
+def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=128):
 
     very_start_time = time.time()
 
