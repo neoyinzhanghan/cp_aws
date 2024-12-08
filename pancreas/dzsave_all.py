@@ -53,8 +53,6 @@ metadata_dict = {
 
 print(f"Found a total of {len(svs_files_to_keep)} SVS files.")
 
-svs_files_to_keep = svs_files_to_keep[:1]
-
 # loop through each svs file
 for svs_file in tqdm(svs_files_to_keep, desc="Tiling SVS Files"):
     # get the path to the svs file
