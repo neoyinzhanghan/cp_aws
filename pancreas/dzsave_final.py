@@ -297,6 +297,86 @@ def get_tile_coordinate_level_pairs_all_level_from_pyramid(pyramid, tile_size=25
     
     return coordinates
 
+def initialize_final_h5py_file_from_pyramid(pyramid, h5_path, patch_size=256):
+    """
+    Create an HDF5 file with a dataset that stores tiles, indexed by row and column.
+
+    Parameters:
+        h5_path (str): Path where the HDF5 file will be created.
+        image_shape (tuple): Shape of the full image (height, width, channels).
+        patch_size (int): The size of each image patch (default: 256).
+
+    Raises:
+        AssertionError: If the file already exists at h5_path.
+    """
+
+    if os.path.exists(h5_path):
+        # delete the file
+        os.remove(h5_path)
+
+    # Create the HDF5 file and dataset
+    with h5py.File(h5_path, "w") as f:
+        for level in pyramid:
+            level_image_height, level_image_width = pyramid[level].size
+
+            print(f"Initialization Level: {level}, Image width: {level_image_width}, Image height: {level_image_height}")
+
+            dt = h5py.special_dtype(vlen=bytes)
+
+            f.create_dataset(
+                str(level),
+                shape=(
+                    max(level_image_width // patch_size + 1, 1),
+                    max(level_image_height // patch_size + 1, 1),
+                ),
+                dtype=dt,
+            )
+
+        # get the list of keys as a list of integers
+        keys = list(map(int, pyramid.keys()))
+
+        max_level = max(keys)
+
+        # also track the image width and height
+        f.create_dataset(
+            "level_0_width",
+            shape=(1,),
+            dtype="int",
+        )
+
+        f.create_dataset(
+            "level_0_height",
+            shape=(1,),
+            dtype="int",
+        )
+
+        # also track the patch size
+        f.create_dataset(
+            "patch_size",
+            shape=(1,),
+            dtype="int",
+        )
+
+        # also track the number of levels
+        f.create_dataset(
+            "num_levels",
+            shape=(1,),
+            dtype="int",
+        )
+
+        # also track the number for overlap which is 0
+        f.create_dataset(
+            "overlap",
+            shape=(1,),
+            dtype="int",
+        )
+
+        f["level_0_width"][0] = pyramid[max_level].size[0]
+        f["level_0_height"][0] = pyramid[max_level].size[1]
+        f["patch_size"][0] = patch_size
+        f["num_levels"][0] = max_level + 1
+        f["overlap"][0] = 0
+
 def initialize_final_h5py_file(
     h5_path, image_width, image_height, num_levels=19, patch_size=256
 ):
@@ -380,17 +460,16 @@ def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num
     wsi = openslide.OpenSlide(wsi_path)
     image_width, image_height = wsi.dimensions
 
-
-    print("Checkpoint 1: Initialized final h5py file")
-    start_time = time.time()
-    initialize_final_h5py_file(h5_path, image_width, image_height, num_levels, patch_size)
-    print(f"Time taken to initialize final h5py file: {time.time() - start_time:.2f} seconds")
-
     print("Checkpoint 2: Get tile coordinate level pairs for level 0")
     start_time = time.time()
     pyramid = create_image_pyramid_dct(wsi.read_region((0, 0), 0, wsi.dimensions), downsample_factor=2, num_levels=num_levels)
     pyramid_ref = ray.put(pyramid)
     print(f"Time taken to create image pyramid: {time.time() - start_time:.2f} seconds")
+
+    print("Checkpoint 1: Initialized final h5py file")
+    start_time = time.time()
+    initialize_final_h5py_file_from_pyramid(pyramid_ref, h5_path, patch_size)
+    print(f"Time taken to initialize final h5py file: {time.time() - start_time:.2f} seconds")
 
     print("Checkpoint 3: Get tile coordinate level pairs for all levels")
     start_time = time.time()
