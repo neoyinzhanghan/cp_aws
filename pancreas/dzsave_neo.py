@@ -394,8 +394,8 @@ def initialize_final_h5py_file_from_pyramid(pyramid, h5_path, patch_size=256, le
             dtype="int",
         )
 
-        f["level_0_width"][0] = pyramid[max_level].size[0]
-        f["level_0_height"][0] = pyramid[max_level].size[1]
+        f["level_0_width"][0] = level_0_width
+        f["level_0_height"][0] = level_0_height
         f["patch_size"][0] = patch_size
         f["num_levels"][0] = max_level + 1
         f["overlap"][0] = 0
