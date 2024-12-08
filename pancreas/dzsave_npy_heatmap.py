@@ -94,8 +94,8 @@ def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path):
                 f.create_dataset(
                     str(level),
                     shape=(
-                        wsi_lvl.shape[0]+1,
-                        wsi_lvl.shape[1]+1,
+                        wsi_lvl.shape[0],
+                        wsi_lvl.shape[1],
                     ),
                     dtype=dt,
                 )
@@ -142,6 +142,10 @@ class NPYCropManager:
         self.npy_heatmap = npy_heatmap_obj_ref
 
         npy_height, npy_width, _ = self.npy_heatmap.shape
+
+        print(f"npy_height: {npy_height}, npy_width: {npy_width}")
+
+        print(f"level_0_height: {level_0_height}, level_0_width: {level_0_width}")
 
         # assert that the npy dimensions are <= level 0 dimensions
         assert npy_width <= level_0_width, "Numpy width is greater than level 0 width"
