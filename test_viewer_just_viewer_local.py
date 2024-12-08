@@ -13,7 +13,12 @@ CORS(app)
 SLIDE_H5_PATH = "/media/ssd2/neo/cp_aws_playground/test.h5"
 TILE_SIZE = 256
 
-# HTML Template for Viewer
+# Get the level 0 width and height of the slide
+with h5py.File(SLIDE_H5_PATH, "r") as f:
+    level_0_width = f["0"].attrs["level_0_width"]
+    level_0_height = f["0"].attrs["level_0_height"]
+
+# HTML Template for Viewer with placeholders for dynamic values
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -48,14 +53,12 @@ HTML_TEMPLATE = """
             id: "viewer-slide",
             prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.0.0/images/",
             tileSources: {
-                tileSource: {
-                    type: "legacy-image-pyramid",
-                    getTileUrl: (level, x, y) => `/tile/slide/${level}/${x}/${y}/`,
-                    tileSize: 256,
-                    width: 37670, // Update with actual width
-                    height: 22569, // Update with actual height
-                    maxLevel: 18
-                }
+                type: "legacy-image-pyramid",
+                getTileUrl: (level, x, y) => `/tile/slide/${level}/${x}/${y}/`,
+                tileSize: 256,
+                width: {{ width }},
+                height: {{ height }},
+                maxLevel: 18
             }
         });
     </script>
@@ -79,7 +82,9 @@ def retrieve_tile_h5(h5_path, level, row, col):
 @app.route("/")
 def index():
     """Serve the main page with the slide viewer."""
-    return render_template_string(HTML_TEMPLATE)
+    # Render the template with dynamic width and height
+    rendered_template = HTML_TEMPLATE.replace("{{ width }}", str(level_0_width)).replace("{{ height }}", str(level_0_height))
+    return render_template_string(rendered_template)
 
 
 @app.route("/tile/slide/<int:level>/<int:x>/<int:y>/", methods=["GET"])
