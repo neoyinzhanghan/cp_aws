@@ -663,3 +663,7 @@ if __name__ == "__main__":
         os.remove(h5_path)
 
     dzsave_neo(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=200)
+
+    # print the num_levels of the h5 file
+    with h5py.File(h5_path, "r") as f:
+        print(f"Number of levels: {f['num_levels'][0]}")
