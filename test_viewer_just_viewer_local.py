@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # File path for testing
-SLIDE_H5_PATH = "/media/ssd2/neo/cp_aws_playground/test.h5"
+SLIDE_H5_PATH = "/media/ssd2/neo/cp_aws_playground/test_neo.h5"
 TILE_SIZE = 256
 
 # Get the level 0 width and height of the slide
