@@ -539,8 +539,7 @@ def initialize_final_h5py_file_from_pyramid_and_tile_level_0(wsi_path, h5_path, 
     wsi = openslide.OpenSlide(wsi_path)
     image_width, image_height = wsi.dimensions
 
-    initialize_final_h5py_file_from_pyramid(pyramid=pyramid, downsample_factor=2, num_levels=num_levels, h5_path=h5_path, patch_size=patch_size, level_0_width=image_width, level_0_height=image_height)
-
+    initialize_final_h5py_file_from_pyramid(pyramid=pyramid, h5_path=h5_path, patch_size=patch_size, level_0_width=image_width, level_0_height=image_height)
 
     # get the tile coordinate level pairs for level 0
     tile_coordinate_level_pairs = get_tile_coordinate_level_pairs_level_0(
