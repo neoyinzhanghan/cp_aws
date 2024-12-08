@@ -348,6 +348,8 @@ def initialize_final_h5py_file_from_pyramid(pyramid, h5_path, patch_size=256, le
             dtype=h5py.special_dtype(vlen=bytes),
         )
 
+        print(f"Initialization Level: {max_level+1}, Image width: {level_0_width}, Image height: {level_0_height}")
+
         for level in pyramid:
             level_image_width, level_image_height = pyramid[level].size
 
