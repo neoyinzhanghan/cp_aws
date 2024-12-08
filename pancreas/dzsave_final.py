@@ -457,6 +457,8 @@ import time # TODO remove the time profiling eventually once the code is stable
 
 def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=32):
 
+    very_start_time = time.time()
+
     wsi = openslide.OpenSlide(wsi_path)
     image_width, image_height = wsi.dimensions
 
@@ -516,6 +518,10 @@ def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num
 
                     del tasks[done_id]
     print(f"Time taken to crop from pyramid and write to h5 storage: {time.time() - start_time:.2f} seconds")
+    total_time = time.time() - very_start_time
+    print(f"Total time taken: {total_time} seconds")
+
+    return total_time
 
 def initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=32):
     
