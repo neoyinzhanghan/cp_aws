@@ -261,7 +261,7 @@ class PILPyramidCropManager:
         return indices_to_jpeg
     
 
-def get_tile_coordinate_level_pairs_level_0(image_width, image_height, tile_size=256):
+def get_tile_coordinate_level_pairs_level_0(image_width, image_height, tile_size=256, num_levels=19):
     """Generate a list of coordinates_leve for tile_sizextile_size disjoint patches."""
     coordinates = []
 
@@ -272,7 +272,7 @@ def get_tile_coordinate_level_pairs_level_0(image_width, image_height, tile_size
             coordinates.append(
                 (
                     (x, y, min(x + tile_size, image_width), min(y + tile_size, image_height)),
-                    0,
+                    num_levels - 1,
                 )
             )
 
@@ -499,7 +499,7 @@ def initialize_final_h5py_file_and_tile_level_0(wsi_path, h5_path, num_levels=19
 
     # get the tile coordinate level pairs for level 0
     tile_coordinate_level_pairs = get_tile_coordinate_level_pairs_level_0(
-        image_width, image_height, tile_size=patch_size
+        image_width, image_height, tile_size=patch_size, num_levels=num_levels
     )
 
     # create a list of batches
