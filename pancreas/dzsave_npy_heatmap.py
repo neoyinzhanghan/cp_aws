@@ -231,8 +231,7 @@ def get_tile_coordinate_level_pairs_npy_top_level(image_width, image_height, pat
     tile_coordinate_level_pairs = []
     for y in range(0, image_height, patch_size):
         for x in range(0, image_width, patch_size):
-            tile_coordinate_level_pairs.append(((x, y), num_levels-1))
-
+            tile_coordinate_level_pairs.append(((x, y, min(x + patch_size, image_width), min(y + patch_size, image_height)), num_levels - 1))   
     return tile_coordinate_level_pairs  
 
 def store_top_level_tiles(npy_path, heatmap_h5_path, batch_size=1024, num_croppers=32):
