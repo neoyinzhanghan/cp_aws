@@ -84,8 +84,8 @@ def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path):
     with h5py.File(heatmap_h5_path, "w") as f:
         for level in range(num_levels):
             # open the heatmap h5 file and extract the heatmap at each level
-            with h5py.File(heatmap_h5_path, "r") as f:
-                heatmap = f[str(level)][:]
+            with h5py.File(wsi_h5_path, "r") as g:
+                wsi_lvl = g[str(level)][:]
 
                 # create a dataset in the new h5 file to store the heatmap
                 dt = h5py.special_dtype(vlen=bytes)
@@ -94,8 +94,8 @@ def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path):
                 f.create_dataset(
                     str(level),
                     shape=(
-                        heatmap.shape[0],
-                        heatmap.shape[1],
+                        wsi_lvl.shape[0],
+                        wsi_lvl.shape[1],
                     ),
                     dtype=dt,
                 )
