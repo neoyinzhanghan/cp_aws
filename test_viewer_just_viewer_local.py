@@ -15,8 +15,8 @@ TILE_SIZE = 256
 
 # Get the level 0 width and height of the slide
 with h5py.File(SLIDE_H5_PATH, "r") as f:
-    level_0_width = f["0"].attrs["level_0_width"]
-    level_0_height = f["0"].attrs["level_0_height"]
+    level_0_width = f["level_0_width"][0]
+    level_0_height = f["level_0_height"][0]
 
 # HTML Template for Viewer with placeholders for dynamic values
 HTML_TEMPLATE = """
