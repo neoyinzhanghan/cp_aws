@@ -609,8 +609,8 @@ def dzsave_neo(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256,
 
     print("Checkpoint 3: Get tile coordinate level pairs for all levels")
     start_time = time.time()
-    tile_coordinate_level_pairs = get_tile_coordinate_level_pairs_all_level_from_pyramid(wsi_path=wsi_path, h5_path=h5_path, pyramid=pyramid, tile_size=patch_size, level_0_width=image_width, level_0_height=image_height) # TODO to improve!!!!
-    list_of_batches = create_list_of_batches_from_list(tile_coordinate_level_pairs, batch_size) 
+    tile_coordinate_level_pairs = get_tile_coordinate_level_pairs_all_level_from_pyramid(pyramid=pyramid, tile_size=patch_size, level_0_width=image_width, level_0_height=image_height) # TODO to improve!!!!
+    list_of_batches = create_list_of_batches_from_list(tile_coordinate_level_pairs, batch_size)  
     print(f"Time taken to get tile coordinate level pairs for all levels: {time.time() - start_time:.2f} seconds")
 
     print("Checkpoint 4: Initialize task managers")
