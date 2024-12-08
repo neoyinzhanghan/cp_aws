@@ -600,12 +600,12 @@ def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num
 
     print("Checkpoint 1: Initialized final h5py file")
     start_time = time.time()
-    initialize_final_h5py_file_from_pyramid(pyramid, h5_path, patch_size, level_0_width=image_width, level_0_height=image_height)
+    initialize_final_h5py_file_from_pyramid_and_tile_level_0(pyramid, h5_path, patch_size=patch_size, num_levels=num_levels, batch_size=batch_size, num_croppers=num_croppers)
     print(f"Time taken to initialize final h5py file: {time.time() - start_time:.2f} seconds")
 
     print("Checkpoint 3: Get tile coordinate level pairs for all levels")
     start_time = time.time()
-    tile_coordinate_level_pairs = get_tile_coordinate_level_pairs_all_level_from_pyramid(pyramid, tile_size=patch_size, level_0_width=image_width, level_0_height=image_height) # TODO to improve!!!!
+    tile_coordinate_level_pairs = get_tile_coordinate_level_pairs_all_level_from_pyramid(wsi_path=wsi_path, h5_path=h5_path, pyramid=pyramid, tile_size=patch_size, level_0_width=image_width, level_0_height=image_height) # TODO to improve!!!!
     list_of_batches = create_list_of_batches_from_list(tile_coordinate_level_pairs, batch_size) 
     print(f"Time taken to get tile coordinate level pairs for all levels: {time.time() - start_time:.2f} seconds")
 

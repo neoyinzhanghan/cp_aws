@@ -3,9 +3,6 @@ import pandas as pd
 from dzsave_neo import dzsave
 from tqdm import tqdm
 
-import os
-from tqdm import tqdm
-
 dir_path = "/media/ssd2/huong/meningioma_train_log/pancreas_new/uni/predict/attn_mil/heatmap"
 
 # get all the files in the directory
