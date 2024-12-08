@@ -225,12 +225,9 @@ class PILPyramidCropManager:
     """
 
     def __init__(self, pil_pyramid_obj_ref) -> None:
-        self.pil_pyramid_obj_ref = pil_pyramid_obj_ref
-
-        print(type(pil_pyramid_obj_ref))
-        import sys
-        sys.exit()
-        self.pil_pyramid = ray.get(pil_pyramid_obj_ref)
+        # self.pil_pyramid_obj_ref = pil_pyramid_obj_ref
+        # self.pil_pyramid = ray.get(pil_pyramid_obj_ref)
+        self.pil_pyramid = pil_pyramid_obj_ref
 
     def async_get_bma_focus_region_level_pair_batch(
         self, focus_region_coords_level_pairs, crop_size=256
