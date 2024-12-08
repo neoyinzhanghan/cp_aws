@@ -186,7 +186,7 @@ class WSICropManager:
 
         return indices_to_jpeg
     
-def create_image_pyramid_dct(level_0_image, downsample_factor=2, num_levels=18):
+def create_image_pyramid_dct(level_0_image, downsample_factor=2, num_levels=19):
     """
     Create an image pyramid using a dictionary to store the images at each level.
     
@@ -201,9 +201,9 @@ def create_image_pyramid_dct(level_0_image, downsample_factor=2, num_levels=18):
 
     start_time = time.time()
     image_pyramid = {}
-    image_pyramid[0] = level_0_image
+    image_pyramid[num_levels-1] = level_0_image
     current_image = level_0_image
-    for level in tqdm(range(num_levels-1, -1, -1), desc="Creating image pyramid"):
+    for level in tqdm(range(num_levels-2, -1, -1), desc="Creating image pyramid"):
         current_image = current_image.resize((max(current_image.width // downsample_factor, 1), max(current_image.height // downsample_factor, 1)))
         image_pyramid[level] = current_image
     
