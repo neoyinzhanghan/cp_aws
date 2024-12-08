@@ -579,7 +579,11 @@ def initialize_final_h5py_file_from_pyramid_and_tile_level_0(wsi_path, h5_path, 
                         for indices_jpeg in batch:
                             x, y, wsi_level, jpeg_string = indices_jpeg
                             level = int(18 - wsi_level)
-                            f[str(level)][x, y] = jpeg_string
+                            try:
+                                f[str(level)][x, y] = jpeg_string
+                            except Exception as e:
+                                print(f"Error saving patch at level: {level}, x: {x}, y: {y}, error: {e}")
+                                raise e
                             # print(f"Saved patch at level: {level}, x: {x}, y: {y}")
                             # print(f"jpeg_string: {jpeg_string}")
 
