@@ -285,17 +285,6 @@ def get_tile_coordinate_level_pairs_all_level_from_pyramid(pyramid, tile_size=25
     assert level_0_width is not None, "Level 0 width must be provided."
     assert level_0_height is not None, "Level 0 height must be provided."
 
-    for y in range(0, level_0_height, tile_size):
-        for x in range(0, level_0_width, tile_size):
-            # Ensure that the patch is within the image boundaries
-
-            coordinates.append(
-                (
-                    (x, y, min(x + tile_size, level_0_width), min(y + tile_size, level_0_height)),
-                    0,
-                )
-            )
-
     for level in pyramid:
         image_width, image_height = pyramid[level].size
         for y in range(0, image_height, tile_size):
