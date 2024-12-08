@@ -162,13 +162,15 @@ class WSICropManager:
         return image
 
     def async_get_bma_focus_region_level_pair_batch(
-        self, focus_region_coords_level_pairs, crop_size=256
+        self, focus_region_coords_level_pairs, crop_size=256, num_levels=19
     ):
         """Save a list of focus regions."""
 
         indices_to_jpeg = []
         for focus_region_coord_level_pair in focus_region_coords_level_pairs:
-            focus_region_coord, wsi_level = focus_region_coord_level_pair
+            focus_region_coord, dzsave_level = focus_region_coord_level_pair
+
+            wsi_level = num_levels - 1 - dzsave_level 
 
             image = self.crop(focus_region_coord, wsi_level=wsi_level)
 
@@ -178,7 +180,7 @@ class WSICropManager:
             indices_level_jpeg = (
                 focus_region_coord[0] // crop_size,
                 focus_region_coord[1] // crop_size,
-                wsi_level,
+                dzsave_level,
                 jpeg_string,
             )
 
