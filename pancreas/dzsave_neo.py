@@ -331,11 +331,16 @@ def initialize_final_h5py_file_from_pyramid(pyramid, h5_path, patch_size=256, le
         # delete the file
         os.remove(h5_path)
 
+    # get the keys of the pyramid as a list of integers
+    keys = list(map(int, pyramid.keys()))
+
+    max_level = max(keys)
+
     # Create the HDF5 file and dataset
     with h5py.File(h5_path, "w") as f:
 
         f.create_dataset(
-            "0",
+            str(max_level+1),
             shape=(
                 max(level_0_width // patch_size + 1, 1),
                 max(level_0_height // patch_size + 1, 1),
