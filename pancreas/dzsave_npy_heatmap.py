@@ -175,10 +175,10 @@ class NPYCropManager:
             assert dzsave_level == self.num_levels - 1, "dzsave_level is not the last level, this should indicate a grave error"
 
             subsampled_focus_region_coord = (
-                focus_region_coord[0] // self.downsample_factor_width,
-                focus_region_coord[1] // self.downsample_factor_height,
-                focus_region_coord[2] // self.downsample_factor_width,
-                focus_region_coord[3] // self.downsample_factor_height,
+                int(focus_region_coord[0] // self.downsample_factor_width),
+                int(focus_region_coord[1] // self.downsample_factor_height),
+                int(focus_region_coord[2] // self.downsample_factor_width),
+                int(focus_region_coord[3] // self.downsample_factor_height),
             )
 
             # crop the numpy array (but note that the x and y are swapped)
