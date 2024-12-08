@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from dzsave_neo import dzsave
+from dzsave_neo import dzsave_neo   
 from tqdm import tqdm
 
 dir_path = "/media/ssd2/huong/meningioma_train_log/pancreas_new/uni/predict/attn_mil/heatmap"
@@ -66,7 +66,7 @@ for svs_file in tqdm(svs_files_to_keep, desc="Tiling SVS Files"):
     svs_file_size_mb = os.path.getsize(svs_path) / 1024 / 1024
     
     # tiling the svs file
-    tiling_time = dzsave(svs_path, h5_path)
+    tiling_time = dzsave_neo(svs_path, h5_path)
     
     # get the file size of the h5 file
     h5_file_size_mb = os.path.getsize(h5_path) / 1024 / 1024
