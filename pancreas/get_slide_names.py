@@ -37,4 +37,8 @@ for svs_file in tqdm(svs_files, desc="Checking SVS Files"):
     if to_keep:
         svs_files_to_keep.append(svs_file)
 
-print(svs_files_to_keep)
+print(f"Found a total of {len(svs_files_to_keep)} SVS files.")  
+
+# metadata_dict = {
+#     "svs_path": [],
+# }
