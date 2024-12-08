@@ -585,7 +585,7 @@ def initialize_final_h5py_file_from_pyramid_and_tile_level_0(wsi_path, h5_path, 
                     del tasks[done_id]
 
 
-def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=32):
+def dzsave_neo(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=32):
 
     very_start_time = time.time()
 
@@ -656,10 +656,10 @@ def dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num
 
 if __name__ == "__main__":
     wsi_path = '/media/ssd2/neo/cp_aws_playground/test.svs'
-    h5_path = '/media/ssd2/neo/cp_aws_playground/test.h5'
+    h5_path = '/media/ssd2/neo/cp_aws_playground/test_neo.h5'
 
     if os.path.exists(h5_path):
         # delete the file
         os.remove(h5_path)
 
-    dzsave(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=1024, num_croppers=200)
+    dzsave_neo(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=1024, num_croppers=200)
