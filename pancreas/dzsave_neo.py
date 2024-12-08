@@ -554,7 +554,7 @@ def initialize_final_h5py_file_from_pyramid_and_tile_level_0(wsi_path, h5_path, 
     for i, batch in enumerate(list_of_batches):
         manager = task_managers[i % num_croppers]
         task = manager.async_get_bma_focus_region_level_pair_batch.remote(
-            batch, crop_size=patch_size
+            batch, crop_size=patch_size, num_levels=num_levels
         )
         tasks[task] = batch
     with h5py.File(h5_path, "a") as f:
