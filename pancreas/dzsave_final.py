@@ -317,7 +317,7 @@ def initialize_final_h5py_file_from_pyramid(pyramid, h5_path, patch_size=256):
     # Create the HDF5 file and dataset
     with h5py.File(h5_path, "w") as f:
         for level in pyramid:
-            level_image_height, level_image_width = pyramid[level].size
+            level_image_width, level_image_height = pyramid[level].size
 
             print(f"Initialization Level: {level}, Image width: {level_image_width}, Image height: {level_image_height}")
 
