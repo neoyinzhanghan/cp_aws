@@ -600,7 +600,7 @@ def dzsave_neo(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256,
 
     print("Checkpoint 1: Initialized final h5py file")
     start_time = time.time()
-    initialize_final_h5py_file_from_pyramid_and_tile_level_0(pyramid, h5_path, patch_size=patch_size, num_levels=num_levels, batch_size=batch_size, num_croppers=num_croppers)
+    initialize_final_h5py_file_from_pyramid_and_tile_level_0(wsi_path=wsi_path, h5_path=h5_path, pyramid=pyramid, patch_size=patch_size, num_levels=num_levels, batch_size=batch_size, num_croppers=num_croppers)
     print(f"Time taken to initialize final h5py file: {time.time() - start_time:.2f} seconds")
 
     print("Checkpoint 3: Get tile coordinate level pairs for all levels")
