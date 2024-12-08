@@ -242,6 +242,10 @@ class PILPyramidCropManager:
 
             image = pil_level_image.crop(focus_region_coord)
 
+            # if the image is RGBA, convert it to RGB
+            if image.mode == 'RGBA':
+                image = image.convert('RGB')
+
             jpeg_string = image_to_jpeg_string(image)
             jpeg_string = encode_image_to_base64(jpeg_string)
 
@@ -493,5 +497,3 @@ if __name__ == "__main__":
         os.remove(h5_path)
 
     dzsave(wsi_path, h5_path, num_levels=18, patch_size=256, batch_size=1024, num_croppers=200)
-
-    
