@@ -281,7 +281,7 @@ def store_top_level_tiles(npy_path, heatmap_h5_path, batch_size=1024, num_croppe
                         for indices_jpeg in batch:
                             x, y, dzsave_level, jpeg_string = indices_jpeg
 
-                            assert dzsave_level == 18
+                            assert dzsave_level == 18, "dzsave_level is not the last level, this should indicate a grave error"
                             try:
                                 f[str(dzsave_level)][x, y] = jpeg_string
                             except Exception as e:
