@@ -94,8 +94,8 @@ def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path):
                 f.create_dataset(
                     str(level),
                     shape=(
-                        wsi_lvl.shape[0],
-                        wsi_lvl.shape[1],
+                        wsi_lvl.shape[0]+1,
+                        wsi_lvl.shape[1]+1,
                     ),
                     dtype=dt,
                 )
