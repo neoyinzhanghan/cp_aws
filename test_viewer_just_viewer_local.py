@@ -11,9 +11,7 @@ CORS(app)
 
 # File path for testing
 # SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/dzsave_dir_rainbow_heatmap/23.CFNA.271 A1 H&E _152604_rainbow_heatmap.h5' #_rainbow_heatmap.h5"
-SLIDE_H5_PATH = (
-    "/media/ssd2/neo/cp_aws_playground/dzsave_dir/23.CFNA.271 A1 H&E _152604.h5"
-)
+SLIDE_H5_PATH = "/media/ssd2/neo/cp_aws_playground/dzsave_dir_rainbow_heatmap/23.CFNA.261 A1 H&E _151044_rainbow_heatmap.h5"
 # SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848_rainbow_heatmap.h5'
 TILE_SIZE = 256
 
