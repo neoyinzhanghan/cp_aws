@@ -2,10 +2,12 @@ import io
 import os
 import ray
 import h5py
+import time
 import base64
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
+from dzsave_neo import get_tile_coordinate_level_pairs_all_level_from_pyramid, PILPyramidCropManager
 
 def create_list_of_batches_from_list(list, batch_size):
     """
@@ -69,8 +71,9 @@ def decode_image_from_base64(encoded_string):
 
 
 
-def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path):
+def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path, num_croppers=32, batch_size=1024):
 
+    very_start_time = time.time()
     # open the WSI h5 file and extract the following information
     # level_0_width, level_0_height, patch_size, num_levels, overlap
     with h5py.File(wsi_h5_path, "r") as f:
@@ -114,10 +117,61 @@ def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path):
         f["num_levels"][0] = num_levels
         f["overlap"][0] = overlap
 
-    store_top_level_tiles(npy_path, heatmap_h5_path)
+    store_top_level_tiles(npy_path, heatmap_h5_path, batch_size=batch_size, num_croppers=num_croppers)
 
-    # pyramid = create_image_pyramid_dct_from_numpy(...)
+    pyramid = create_image_pyramid_dct_from_numpy(npy_path, level_0_width=level_0_width, level_0_height=level_0_height, num_levels=num_levels)
 
+    pyramid_ref = ray.put(pyramid)
+
+    print("Checkpoint 3: Get tile coordinate level pairs for all levels")
+    start_time = time.time()
+    tile_coordinate_level_pairs = get_tile_coordinate_level_pairs_all_level_from_pyramid(pyramid=pyramid, tile_size=patch_size, level_0_width=level_0_width, level_0_height=level_0_height) # TODO to improve!!!!
+    list_of_batches = create_list_of_batches_from_list(tile_coordinate_level_pairs, batch_size)  
+    print(f"Time taken to get tile coordinate level pairs for all levels: {time.time() - start_time:.2f} seconds")
+
+    print("Checkpoint 4: Initialize task managers")
+    start_time = time.time()
+    task_managers = [PILPyramidCropManager.remote(pyramid_ref) for _ in range(num_croppers)]
+
+    tasks = {}
+    print(f"Time taken to initialize task managers: {time.time() - start_time:.2f} seconds")
+
+    print("Checkpoint 5: Start cropping")
+    start_time = time.time()
+    for i, batch in enumerate(list_of_batches):
+        manager = task_managers[i % num_croppers]
+        task = manager.async_get_bma_focus_region_level_pair_batch.remote(
+            batch, crop_size=patch_size
+        )
+        tasks[task] = batch
+
+    with h5py.File(h5_path, "a") as f:
+        with tqdm(
+            total=len(tile_coordinate_level_pairs), desc="Cropping focus regions"
+        ) as pbar:
+            while tasks:
+                done_ids, _ = ray.wait(list(tasks.keys()))
+
+                for done_id in done_ids:
+                    try:
+                        batch = ray.get(done_id)
+                        for indices_jpeg in batch:
+                            x, y, level, jpeg_string = indices_jpeg
+                            f[str(level)][x, y] = jpeg_string
+                            # print(f"Saved patch at level: {level}, x: {x}, y: {y}")
+                            # print(f"jpeg_string: {jpeg_string}")
+
+                        pbar.update(len(batch))
+
+                    except ray.exceptions.RayTaskError as e:
+                        print(f"Task for batch {tasks[done_id]} failed with error: {e}")
+
+                    del tasks[done_id]
+    print(f"Time taken to crop from pyramid and write to h5 storage: {time.time() - start_time:.2f} seconds")
+    total_time = time.time() - very_start_time
+    print(f"Total time taken: {total_time} seconds")
+
+    return total_time
 
 @ray.remote
 class NPYCropManager:
@@ -143,9 +197,9 @@ class NPYCropManager:
 
         npy_height, npy_width, _ = self.npy_heatmap.shape
 
-        print(f"npy_height: {npy_height}, npy_width: {npy_width}")
+        # print(f"npy_height: {npy_height}, npy_width: {npy_width}")
 
-        print(f"level_0_height: {level_0_height}, level_0_width: {level_0_width}")
+        # print(f"level_0_height: {level_0_height}, level_0_width: {level_0_width}") # TODO can remove, this is for debugging purpose only
 
         # assert that the npy dimensions are <= level 0 dimensions
         assert npy_width <= level_0_width, "Numpy width is greater than level 0 width"
@@ -299,8 +353,39 @@ def store_top_level_tiles(npy_path, heatmap_h5_path, batch_size=1024, num_croppe
 
     
 
-# def create_image_pyramid_dct_from_numpy(...):
-#     pass 
+def create_image_pyramid_dct_from_numpy(npy_path, level_0_width=None, level_0_height=None, downsample_factor=2, num_levels=19):
+    """
+    Create an image pyramid using a dictionary to store the images at each level.
+    
+    Args:
+        npy_path (str): The path to the numpy array.
+        level_0_width (int): The width of the level 0 image.
+        level_0_height (int): The height of the level 0 image.
+        downsample_factor (int): The downsample factor for each level.
+        num_levels (int): The number of levels in the image pyramid.
+        
+    Returns:
+        dict: A dictionary containing the images at each level of the image pyramid.
+    """
+
+    # open the numpy array
+    heatmap = np.load(npy_path)
+
+    # turn the numpy array into a PIL image
+    heatmap = Image.fromarray(heatmap)
+
+    level_1_width = max(level_0_width // downsample_factor, 1)
+    level_1_height = max(level_0_height // downsample_factor, 1)
+
+    image_pyramid = {}
+
+    current_image = heatmap.resize((level_1_width, level_1_height))
+    image_pyramid[num_levels - 2] = current_image
+    for level in tqdm(range(num_levels - 3, -1, -1), desc="Creating image pyramid"):
+        current_image = current_image.resize((max(current_image.width // downsample_factor, 1), max(current_image.height // downsample_factor, 1)))
+        image_pyramid[level] = current_image
+    
+    return image_pyramid
 
 if __name__ == "__main__":
     wsi_path = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848.svs'
