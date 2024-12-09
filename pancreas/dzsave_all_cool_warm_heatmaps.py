@@ -35,13 +35,29 @@ metadata_dict = {
 
 num_matching = 0
 
+
+def reverse_search_for_heatmap_npy(dzsave_file):
+    # get the list of all .npy files in the heatmap_dir
+    heatmap_files = [
+        f
+        for f in os.listdir(heatmap_dir)
+        if os.path.isfile(os.path.join(heatmap_dir, f)) and f.endswith(".npy")
+    ]
+
+    for heatmap_file in heatmap_files:
+        if heatmap_file.split("_coolwarm_heatmap_mask.npy")[0] in dzsave_file:
+            return heatmap_file
+
+    raise ValueError(f"No matching file found for {dzsave_file}")
+
+
 # the h5 file should have file_name.h5, and the npy file should have file_name_rainbow_heatmap_mask.npy
 for dzsave_file in tqdm(dzsave_files, desc="dzsaving Heatmap NPY Files"):
 
     # print(f"Processing {dzsave_file}...")
 
     start_time = time.time()
-    heatmap_file_name = dzsave_file.split(".h5")[0] + "_coolwarm_heatmap_mask.npy"
+    heatmap_file_name = reverse_search_for_heatmap_npy(dzsave_file)
     heatmap_file_path = os.path.join(heatmap_dir, heatmap_file_name)
 
     if os.path.exists(heatmap_file_path):
