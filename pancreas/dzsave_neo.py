@@ -532,11 +532,11 @@ if __name__ == "__main__":
     wsi_path = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848.svs'
     h5_path = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848.h5'
 
-    # if os.path.exists(h5_path):
-    #     # delete the file
-    #     os.remove(h5_path)
+    if os.path.exists(h5_path):
+        # delete the file
+        os.remove(h5_path)
 
-    # dzsave_neo(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=200)
+    dzsave_neo(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256, num_croppers=200)
 
     # print the num_levels of the h5 file
     with h5py.File(h5_path, "r") as f:
