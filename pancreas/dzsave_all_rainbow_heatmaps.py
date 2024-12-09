@@ -36,6 +36,8 @@ metadata_dict = {
 # the h5 file should have file_name.h5, and the npy file should have file_name_rainbow_heatmap_mask.npy
 for dzsave_file in tqdm(dzsave_files, desc="dzsaving Heatmap NPY Files"):
 
+    print(f"Processing {dzsave_file}...")
+
     start_time = time.time()
     heatmap_file_name = dzsave_file.split(".h5")[0] + "_rainbow_heatmap_mask.npy"
     heatmap_file_path = os.path.join(heatmap_dir, heatmap_file_name)
@@ -46,7 +48,11 @@ for dzsave_file in tqdm(dzsave_files, desc="dzsaving Heatmap NPY Files"):
         heatmap_save_dir, dzsave_file.split(".h5")[0] + "_rainbow_heatmap.h5"
     )
 
-    dzsave_npy_heatmap(dzsave_file_path, heatmap_h5_save_path, heatmap_file_path)
+    dzsave_npy_heatmap(
+        wsi_h5_path=dzsave_file_path,
+        heatmap_h5_path=heatmap_h5_save_path,
+        npy_path=heatmap_file_path,
+    )
 
     metadata_dict["h5_path"].append(dzsave_file_path)
     metadata_dict["heatmap_npy_path"].append(heatmap_file_path)
