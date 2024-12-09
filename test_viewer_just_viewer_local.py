@@ -10,7 +10,10 @@ app = Flask(__name__)
 CORS(app)
 
 # File path for testing
-SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/dzsave_dir_rainbow_heatmap/23.CFNA.271 A1 H&E _152604_rainbow_heatmap.h5' #_rainbow_heatmap.h5"
+# SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/dzsave_dir_rainbow_heatmap/23.CFNA.271 A1 H&E _152604_rainbow_heatmap.h5' #_rainbow_heatmap.h5"
+SLIDE_H5_PATH = (
+    "/media/ssd2/neo/cp_aws_playground/dzsave_dir/23.CFNA.271 A1 H&E _152604.h5"
+)
 # SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848_rainbow_heatmap.h5'
 TILE_SIZE = 256
 
@@ -84,7 +87,9 @@ def retrieve_tile_h5(h5_path, level, row, col):
 def index():
     """Serve the main page with the slide viewer."""
     # Render the template with dynamic width and height
-    rendered_template = HTML_TEMPLATE.replace("{{ width }}", str(level_0_width)).replace("{{ height }}", str(level_0_height))
+    rendered_template = HTML_TEMPLATE.replace(
+        "{{ width }}", str(level_0_width)
+    ).replace("{{ height }}", str(level_0_height))
     return render_template_string(rendered_template)
 
 
