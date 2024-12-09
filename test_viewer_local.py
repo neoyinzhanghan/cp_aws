@@ -60,8 +60,8 @@ HTML_TEMPLATE = """
                     type: "legacy-image-pyramid",
                     getTileUrl: (level, x, y) => `/tile/slide/${level}/${x}/${y}/`,
                     tileSize: 256,
-                    width: 37670, // Update with actual width
-                    height: 22569, // Update with actual height
+                    width: {{ width }},
+                    height: {{ height }},
                     maxLevel: 18
                 }
             }
