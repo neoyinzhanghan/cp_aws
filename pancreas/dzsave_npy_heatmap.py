@@ -145,7 +145,7 @@ def dzsave_npy_heatmap(wsi_h5_path, heatmap_h5_path, npy_path, num_croppers=32, 
         )
         tasks[task] = batch
 
-    with h5py.File(h5_path, "a") as f:
+    with h5py.File(heatmap_h5_path, "a") as f:
         with tqdm(
             total=len(tile_coordinate_level_pairs), desc="Cropping focus regions"
         ) as pbar:
