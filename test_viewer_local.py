@@ -14,6 +14,11 @@ SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848.h5
 HEATMAP_H5_PATH = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848_rainbow_heatmap.h5'
 TILE_SIZE = 256
 
+# Get the level 0 width and height of the slide
+with h5py.File(SLIDE_H5_PATH, "r") as f:
+    level_0_width = f["level_0_width"][0]
+    level_0_height = f["level_0_height"][0]
+
 # HTML Template for Viewer
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -70,8 +75,8 @@ HTML_TEMPLATE = """
                     type: "legacy-image-pyramid",
                     getTileUrl: (level, x, y) => `/tile/heatmap/${level}/${x}/${y}/`,
                     tileSize: 256,
-                    width: 37670, // Update with actual width
-                    height: 22569, // Update with actual height
+                    width: {{ width }},
+                    height: {{ height }},
                     maxLevel: 18
                 }
             }
@@ -96,8 +101,11 @@ def retrieve_tile_h5(h5_path, level, row, col):
 
 @app.route("/")
 def index():
-    """Serve the main page with viewers for both HDF5 files."""
-    return render_template_string(HTML_TEMPLATE)
+    """Serve the main page with the slide viewer."""
+    # Render the template with dynamic width and height
+    rendered_template = HTML_TEMPLATE.replace("{{ width }}", str(level_0_width)).replace("{{ height }}", str(level_0_height))
+    return render_template_string(rendered_template)
+
 
 
 @app.route("/tile/slide/<int:level>/<int:x>/<int:y>/", methods=["GET"])
