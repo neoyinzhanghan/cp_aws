@@ -7,4 +7,4 @@ with h5py.File(heatmap_h5, 'r') as f:
     print(f['level_0_width'][0])
     print(f['level_0_height'][0])
 
-    print(f[0][0, 0])
+    print(f[0])
