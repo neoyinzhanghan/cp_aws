@@ -10,7 +10,7 @@ found_heatmap_npy = 0
 
 # first list all the files in the dzsave_dir
 dzsave_files = [
-    f for f in os.listdir(dzsave_dir) if os.path.isfile(os.path.join(dzsave_dir, f))
+    f for f in os.listdir(dzsave_dir) if os.path.isfile(os.path.join(dzsave_dir, f)) and f.endswith(".h5")
 ]
 
 # the h5 file should have file_name.h5, and the npy file should have file_name_rainbow_heatmap_mask.npy
