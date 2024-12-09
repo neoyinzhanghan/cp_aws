@@ -537,3 +537,7 @@ if __name__ == "__main__":
     # print the num_levels of the h5 file
     with h5py.File(h5_path, "r") as f:
         print(f"Number of levels: {f['num_levels'][0]}")
+
+    # write 19 to replace the value of f['num_levels'][0]
+    with h5py.File(h5_path, "a") as f:
+        f["num_levels"][0] = 19
