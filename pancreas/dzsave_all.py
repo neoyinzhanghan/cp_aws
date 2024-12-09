@@ -1,9 +1,11 @@
 import os
 import pandas as pd
-from dzsave_neo import dzsave_neo   
+from dzsave_neo import dzsave_neo
 from tqdm import tqdm
 
-dir_path = "/media/ssd2/huong/meningioma_train_log/pancreas_new/uni/predict/attn_mil/heatmap"
+dir_path = (
+    "/media/ssd2/huong/meningioma_train_log/pancreas_new/uni/predict/attn_mil/heatmap"
+)
 
 # get all the files in the directory
 files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
@@ -57,20 +59,20 @@ svs_files_to_keep = svs_files_to_keep[:1]
 for svs_file in tqdm(svs_files_to_keep, desc="Tiling SVS Files"):
     # get the path to the svs file
     svs_path = os.path.join(svs_dir, svs_file)
-    
+
     # get the path to the h5 file
     h5_file = svs_file.replace(".svs", ".h5")
     h5_path = os.path.join(save_dir, h5_file)
-    
+
     # get the file size of the svs file
     svs_file_size_mb = os.path.getsize(svs_path) / 1024 / 1024
-    
+
     # tiling the svs file
     tiling_time = dzsave_neo(svs_path, h5_path)
-    
+
     # get the file size of the h5 file
     h5_file_size_mb = os.path.getsize(h5_path) / 1024 / 1024
-    
+
     # add the metadata to the dictionary
     metadata_dict["svs_path"].append(svs_path)
     metadata_dict["h5_path"].append(h5_path)
