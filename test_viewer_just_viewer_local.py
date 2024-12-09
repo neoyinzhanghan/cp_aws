@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # File path for testing
-SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/dzsave_dir/23.CFNA.364 A1 H&E _101431.h5' #_rainbow_heatmap.h5"
+SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/dzsave_dir/23.CFNA.512 A1 H&E _113527.h5' #_rainbow_heatmap.h5"
 # SLIDE_H5_PATH = '/media/ssd2/neo/cp_aws_playground/23.CFNA.113 A1 H&E _171848_rainbow_heatmap.h5'
 TILE_SIZE = 256
 
