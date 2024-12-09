@@ -21,7 +21,7 @@ dzsave_files = [
     if os.path.isfile(os.path.join(dzsave_dir, f)) and f.endswith(".h5")
 ]
 
-dzsave_files = dzsave_files[:2]  # TODO remove this line once the code is working
+# dzsave_files = dzsave_files[:2]  # TODO remove this line once the code is working
 
 metadata_dict = {
     "h5_path": [],
