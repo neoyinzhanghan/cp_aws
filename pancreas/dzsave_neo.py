@@ -517,6 +517,10 @@ def dzsave_neo(wsi_path, h5_path, num_levels=19, patch_size=256, batch_size=256,
                         print(f"Task for batch {tasks[done_id]} failed with error: {e}")
 
                     del tasks[done_id]
+    
+    with h5py.File(h5_path, "a") as f:
+        f["num_levels"][0] = f["num_levels"][0] + 1 # TODO this is a temporary patch to fix the num_levels issue
+
     print(f"Time taken to crop from pyramid and write to h5 storage: {time.time() - start_time:.2f} seconds")
     total_time = time.time() - very_start_time
     print(f"Total time taken: {total_time} seconds")
@@ -537,7 +541,3 @@ if __name__ == "__main__":
     # print the num_levels of the h5 file
     with h5py.File(h5_path, "r") as f:
         print(f"Number of levels: {f['num_levels'][0]}")
-
-    # write 19 to replace the value of f['num_levels'][0]
-    with h5py.File(h5_path, "a") as f:
-        f["num_levels"][0] = 19
