@@ -10,6 +10,9 @@ new_df_path = "/home/dog/Documents/huong/analysis/visualization/website/pancreas
 df = pd.read_csv(old_df_path)
 new_df = pd.read_csv(new_df_path)
 
+# add a new "pred" column to the df, initally filled with "NA"
+df["pred"] = "NA"
+
 # iterate through each row in the df
 for idx, row in df.iterrows():
     case_name = row["case_name"]
@@ -21,4 +24,7 @@ for idx, row in df.iterrows():
 
     prediction = new_df_row["pred"].values[0]
 
-    print(prediction)
+    df.loc[idx, "pred"] = prediction
+
+# save the df overwriting the old csv file
+df.to_csv(old_df_path, index=False)
