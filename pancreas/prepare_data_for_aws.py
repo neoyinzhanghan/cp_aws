@@ -58,8 +58,8 @@ for idx, row in tqdm(
     old_filename = wsi_h5_file
     old_heatmap_filename = heatmap_h5_file
 
-    new_filename = str(idx) + ".h5"
-    new_heatmap_filename = str(idx) + "_heatmap.h5"
+    new_filename = str(idx + 1) + ".h5"
+    new_heatmap_filename = str(idx + 1) + "_heatmap.h5"
 
     new_filepath = os.path.join(wsi_h5_save_dir, new_filename)
     new_heatmap_filepath = os.path.join(heatmap_h5_save_dir, new_heatmap_filename)
@@ -77,7 +77,7 @@ for idx, row in tqdm(
 
     final_metadata_dict["filename"].append(new_filename)
     final_metadata_dict["heatmap_filename"].append(new_heatmap_filename)
-    final_metadata_dict["pseudo_idx"].append(idx)
+    final_metadata_dict["pseudo_idx"].append(idx + 1)
     final_metadata_dict["old_filename"].append(old_filename)
     final_metadata_dict["old_heatmap_filename"].append(old_heatmap_filename)
     final_metadata_dict["case_name"].append(case_name)
