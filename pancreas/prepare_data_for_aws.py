@@ -72,8 +72,8 @@ for idx, row in tqdm(
     split = row["split"]
 
     # copy the wsi_h5 file to the wsi_h5_save_dir # TODO Temporarily commented out
-    # shutil.copyfile(os.path.join(wsi_h5_dir, wsi_h5_file), new_filepath)
-    # shutil.copyfile(os.path.join(heatmap_h5_dir, heatmap_h5_file), new_heatmap_filepath)
+    shutil.copyfile(os.path.join(wsi_h5_dir, wsi_h5_file), new_filepath)
+    shutil.copyfile(os.path.join(heatmap_h5_dir, heatmap_h5_file), new_heatmap_filepath)
 
     final_metadata_dict["filename"].append(new_filename)
     final_metadata_dict["heatmap_filename"].append(new_heatmap_filename)
