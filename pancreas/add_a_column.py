@@ -4,7 +4,7 @@ old_df_path = (
     "/home/dog/Documents/neo/cp-lab-wsi-upload/wsi-and-heatmaps/pancreas_metadata.csv"
 )
 
-new_df_path = "/home/dog/Documents/huong/analysis/visualization/website/pancreas"
+new_df_path = "/home/dog/Documents/huong/analysis/visualization/website/pancreas/pancreas_process_list.csv"
 
 # open the df_path as a pandas DataFrame
 df = pd.read_csv(old_df_path)
