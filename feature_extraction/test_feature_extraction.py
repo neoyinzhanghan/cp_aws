@@ -242,7 +242,8 @@ for i, batch in tqdm(
     enumerate(tile_batches), desc="Stacking Tensors", total=len(all_results)
 ):
     print(len(batch))
-    print(batch[0].shape)
+    print(type(batch[0]))
+    print(batch[0].size())
     stack = torch.stack(
         [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in batch]
     )
