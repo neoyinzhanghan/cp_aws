@@ -246,14 +246,6 @@ tile_batches = create_list_of_batches_from_list(all_results, 32)
 for i, batch in tqdm(
     enumerate(tile_batches), desc="Stacking Tensors", total=len(all_results)
 ):
-    print(len(batch))
-    print(type(batch[0]))
-
-    # batch[0] is a PIL image, print the dimensions
-    print(batch[0].size)
-
-    import sys
-    sys.exit()
 
     stack = torch.stack(
         [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in batch]
