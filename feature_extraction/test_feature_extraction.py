@@ -163,7 +163,7 @@ class TilingWorker:
             if tile.mode == "RGBA":
                 tile = tile.convert("RGB")
 
-            tiles.append(tiles)
+            tiles.append(tile)
 
         # tiles_batches = create_list_of_batches_from_list(tiles, sub_batch_size)
 
@@ -239,6 +239,7 @@ print(len(all_results))
 print(all_results[0].shape)
 
 import sys
+
 sys.exit()
 
 tile_batches = create_list_of_batches_from_list(all_results, 32)
