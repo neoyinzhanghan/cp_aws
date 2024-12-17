@@ -234,12 +234,12 @@ with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
 
             del tasks[done_id]
 
-print(len(all_results))
-print(type(all_results[0]))
-print(all_results[0])
+# print(len(all_results))
+# print(type(all_results[0]))
+# print(all_results[0])
 
-import sys
-sys.exit()
+# import sys
+# sys.exit()
 
 tile_batches = create_list_of_batches_from_list(all_results, 32)
 
@@ -248,7 +248,10 @@ for i, batch in tqdm(
 ):
     print(len(batch))
     print(type(batch[0]))
-    print(batch[0].size())
+
+    import sys
+    sys.exit()
+
     stack = torch.stack(
         [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in batch]
     )
