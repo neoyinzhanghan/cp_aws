@@ -226,9 +226,9 @@ with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
                     done_id
                 )  # this has dimension [batch_size, feature_size]
 
-                all_results.extend(update)
+                all_results.extend(tensor_batches)
 
-                pbar.update(len(tensor_batches))
+                pbar.update(update)
             except RayTaskError as e:
                 print(f"Task for focus {tasks[done_id]} failed with error: {e}")
 
