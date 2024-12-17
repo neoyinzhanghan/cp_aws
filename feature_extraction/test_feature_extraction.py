@@ -139,7 +139,7 @@ print(f"Output: {output}")
 
 
 @ray.remote(num_gpus=1)
-def UNIFeatureExtractionWorker():
+class UNIFeatureExtractionWorker:
     """Class for extracting features from tiles using UNI model
     === Class Attributes ===
     - model: UNIExtractor: the UNI model
