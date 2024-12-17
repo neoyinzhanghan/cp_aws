@@ -57,6 +57,8 @@ class SVSTileDataset(Dataset):
         x = metadata_row["x"]
         y = metadata_row["y"]
 
+        x, y = int(x), int(y)
+
         # Read the corresponding tile from the SVS file
         tile = self.svs.read_region(
             (x, y), level=0, size=(self.level_0_tile_size, self.level_0_tile_size)
