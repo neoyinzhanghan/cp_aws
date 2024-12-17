@@ -12,6 +12,33 @@ from torch.utils.data import Dataset
 from ray.exceptions import RayTaskError
 
 
+def create_list_of_batches_from_list(list, batch_size):
+    """
+    This function creates a list of batches from a list.
+
+    :param list: a list
+    :param batch_size: the size of each batch
+    :return: a list of batches
+
+    >>> create_list_of_batches_from_list([1, 2, 3, 4, 5], 2)
+    [[1, 2], [3, 4], [5]]
+    >>> create_list_of_batches_from_list([1, 2, 3, 4, 5, 6], 3)
+    [[1, 2, 3], [4, 5, 6]]
+    >>> create_list_of_batches_from_list([], 3)
+    []
+    >>> create_list_of_batches_from_list([1, 2], 3)
+    [[1, 2]]
+    """
+
+    list_of_batches = []
+
+    for i in range(0, len(list), batch_size):
+        batch = list[i : i + batch_size]
+        list_of_batches.append(batch)
+
+    return list_of_batches
+
+
 class SVSTileDataset(Dataset):
     def __init__(self, svs_path, csv_path, mpp=0.5, tile_size=224, transform=None):
         """
@@ -88,6 +115,92 @@ class SVSTileDataset(Dataset):
         )  # Change shape to CxHxW
 
         return tile  # TODO you might want to add some other metadata here to be tracked but these should not non-negligibly contribute to the overall runtime
+
+
+@ray.remote
+class TilingWorker:
+    """
+    === Attributes ===
+
+    svs_path (str): path to the SVS file
+    svs (openslide.OpenSlide): OpenSlide object for the SVS file
+    """
+
+    def __init__(self, svs_path):
+        self.svs_path = svs_path
+        self.svs = openslide.OpenSlide(svs_path)
+
+    def async_tile(self, x, y, tile_size):
+        """
+        Get a tile from the SVS file at the given coordinates
+
+        Args:
+            x (int): x-coordinate of the tile
+            y (int): y-coordinate of the tile
+            tile_size (int): size of the tile
+
+        Returns:
+            np.ndarray: the tile
+        """
+        tile = self.svs.read_region((x, y), level=0, size=(tile_size, tile_size))
+
+        return np.array(tile)
+
+    def async_tile_batch(self, batch, tile_size, sub_batch_size):
+        tiles = []
+
+        for x, y in batch:
+            tile = self.svs.read_region((x, y), level=0, size=(tile_size, tile_size))
+
+            # if RGBA convert to RGB
+            if tile.mode == "RGBA":
+                tile = tile.convert("RGB")
+
+            tiles.append(tiles)
+
+        tiles_batches = create_list_of_batches_from_list(tiles, sub_batch_size)
+
+        tensor_batches = []
+
+        for tiles_batch in tiles_batches:
+            # tiles_batch is a list of tiles as PIL images, convert them to a stacked tensor of shape [sub_batch_size, 3, tile_size, tile_size]
+
+            tiles_batch = torch.stack(
+                [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in tiles_batch]
+            )
+
+            tensor_batches.append(tiles_batch)
+
+        return tensor_batches
+
+
+num_tilers = 128
+tiling_batch_size = 512
+
+tiling_workers = [TilingWorker.remote(wsi_path) for _ in range(num_tilers)]
+
+csv_path = (
+    "/home/dog/Documents/huong/analysis/visualization/website/mayo/K106022_coords.csv"
+)
+
+# Load the CSV file
+patch_grid = pd.read_csv(csv_path)
+
+# only keep the rows where the include column is equal to True
+patch_grid = patch_grid[patch_grid["include"] == True]
+
+# get the x and y column as a list of (x,y) tuples
+patch_grids = patch_grid[["x", "y"]].values.tolist()
+
+print(f"Number of tiles: {len(patch_grid)}")
+
+patch_grids_batches = create_list_of_batches_from_list(patch_grids, tiling_batch_size)
+
+print(f"Number of batches: {len(patch_grids_batches)}")
+
+import sys
+
+sys.exit()
 
 
 patch_grid_csv = (
