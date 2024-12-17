@@ -155,7 +155,9 @@ class TilingWorker:
         tiles = []
 
         for x, y in batch:
-            tile = self.svs.read_region((x, y), level=0, size=(tile_size, tile_size))
+            tile = self.svs.read_region(
+                (int(x), int(y)), level=0, size=(tile_size, tile_size)
+            )
 
             # if RGBA convert to RGB
             if tile.mode == "RGBA":
