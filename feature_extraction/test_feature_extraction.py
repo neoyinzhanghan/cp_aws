@@ -11,6 +11,11 @@ from uni import load_model
 from torch.utils.data import Dataset
 from ray.exceptions import RayTaskError
 
+patch_grid_csv = (
+    "/home/dog/Documents/huong/analysis/visualization/website/mayo/K106022_coords.csv"
+)
+wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
+
 
 def create_list_of_batches_from_list(list, batch_size):
     """
@@ -202,11 +207,6 @@ import sys
 
 sys.exit()
 
-
-patch_grid_csv = (
-    "/home/dog/Documents/huong/analysis/visualization/website/mayo/K106022_coords.csv"
-)
-wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
 
 print("Creating the dataset...")
 # Create the dataset
