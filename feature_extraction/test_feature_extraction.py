@@ -203,6 +203,35 @@ patch_grids_batches = create_list_of_batches_from_list(patch_grids, tiling_batch
 
 print(f"Number of batches: {len(patch_grids_batches)}")
 
+tasks = {}
+all_results = []
+new_focus_regions = []
+
+for i, batch in tqdm(
+    enumerate(patch_grids_batches), desc="Tiling Tiles", total=len(patch_grids_batches)
+):
+    worker = tiling_workers[i % num_tilers]
+    task = worker.async_tile_batch.remote(batch)
+    tasks[task] = batch
+
+with tqdm(total=len(patch_grids_batches), desc="Extracting features") as pbar:
+    while tasks:
+        done_ids, _ = ray.wait(list(tasks.keys()))
+
+        for done_id in done_ids:
+            try:
+                tensor_batches = ray.get(
+                    done_id
+                )  # this has dimension [batch_size, feature_size]
+
+                all_results.extend(tensor_batches)
+
+                pbar.update(len(tensor_batches))
+            except RayTaskError as e:
+                print(f"Task for focus {tasks[done_id]} failed with error: {e}")
+
+            del tasks[done_id]
+
 import sys
 
 sys.exit()
