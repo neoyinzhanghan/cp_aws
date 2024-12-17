@@ -44,6 +44,21 @@ def create_list_of_batches_from_list(list, batch_size):
     return list_of_batches
 
 
+def batching_tensor_stack(tensor_stack, batch_size):
+    """
+    The tensorstack has shape [num_samples, C, H, W]
+    Batch the tensor stack into batches of size batch_size
+    """
+
+    batches = []
+
+    for i in range(0, tensor_stack.shape[0], batch_size):
+        batch = tensor_stack[i : i + batch_size]
+        batches.append(batch)
+
+    return batches
+
+
 class SVSTileDataset(Dataset):
     def __init__(self, svs_path, csv_path, mpp=0.5, tile_size=224, transform=None):
         """
@@ -165,20 +180,13 @@ class TilingWorker:
 
             tiles.append(tile)
 
-        # tiles_batches = create_list_of_batches_from_list(tiles, sub_batch_size)
+        tensor_stack = torch.stack(
+            [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in tiles]
+        )
 
-        # tensor_batches = []
+        tensor_batches = batching_tensor_stack(tensor_stack, sub_batch_size)
 
-        # for tiles_batch in tiles_batches:
-        #     # tiles_batch is a list of tiles as PIL images, convert them to a stacked tensor of shape [sub_batch_size, 3, tile_size, tile_size]
-
-        #     tensor_stack = torch.stack(
-        #         [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in tiles_batch]
-        #     )
-
-        #     tensor_batches.append(tensor_stack)
-
-        return tiles, len(batch)
+        return tensor_batches, len(batch)
 
 
 num_tilers = 128
@@ -234,22 +242,22 @@ with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
 
             del tasks[done_id]
 
-# print(len(all_results))
-# print(type(all_results[0]))
-# print(all_results[0])
+print(len(all_results))
+print(type(all_results[0]))
+print(all_results[0].shape)
 
 # import sys
 # sys.exit()
 
-tile_batches = create_list_of_batches_from_list(all_results, 32)
+# tile_batches = create_list_of_batches_from_list(all_results, 32)
 
-for i, batch in tqdm(
-    enumerate(tile_batches), desc="Stacking Tensors", total=len(tile_batches)
-):
+# for i, batch in tqdm(
+#     enumerate(tile_batches), desc="Stacking Tensors", total=len(tile_batches)
+# ):
 
-    stack = torch.stack(
-        [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in batch]
-    )
+#     stack = torch.stack(
+#         [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in batch]
+#     )
 
 # print("Creating the dataset...")
 # # Create the dataset
