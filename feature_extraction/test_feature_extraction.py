@@ -235,6 +235,11 @@ with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
             del tasks[done_id]
 
 print(len(all_results))
+print(type(all_results[0]))
+print(all_results[0])
+
+import sys
+sys.exit()
 
 tile_batches = create_list_of_batches_from_list(all_results, 32)
 
