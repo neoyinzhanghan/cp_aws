@@ -222,11 +222,11 @@ with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
 
         for done_id in done_ids:
             try:
-                tensor_batches = ray.get(
+                tensor_batches, update = ray.get(
                     done_id
                 )  # this has dimension [batch_size, feature_size]
 
-                all_results.extend(tensor_batches)
+                all_results.extend(update)
 
                 pbar.update(len(tensor_batches))
             except RayTaskError as e:
