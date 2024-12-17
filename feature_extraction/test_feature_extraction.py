@@ -249,6 +249,9 @@ for i, batch in tqdm(
     print(len(batch))
     print(type(batch[0]))
 
+    # batch[0] is a PIL image, print the dimensions
+    print(batch[0].size)
+
     import sys
     sys.exit()
 
