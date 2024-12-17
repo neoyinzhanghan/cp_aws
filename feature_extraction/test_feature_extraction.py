@@ -39,6 +39,11 @@ class SVSTileDataset(Dataset):
 
         self.level_0_mpp = self.svs.properties[openslide.PROPERTY_NAME_MPP_X]
 
+        print(f"Level 0 MPP: {self.level_0_mpp}")
+        print(type(self.level_0_mpp))
+        print(f"Desired MPP: {self.mpp}")
+        print(type(self.mpp))
+
         assert self.mpp > self.level_0_mpp, "mpp should be greater than the level 0 mpp"
         self.downsampling_factor = self.mpp / self.level_0_mpp
         self.level_0_tile_size = int(tile_size * self.downsampling_factor)
