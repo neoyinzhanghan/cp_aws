@@ -45,7 +45,7 @@ class SVSTileDataset(Dataset):
         print(type(self.mpp))
 
         assert self.mpp > self.level_0_mpp, "mpp should be greater than the level 0 mpp"
-        self.downsampling_factor = self.mpp / self.level_0_mpp
+        self.downsampling_factor = 1  # self.mpp / self.level_0_mpp <<< generally we do not want to assume this TODO
         self.level_0_tile_size = int(tile_size * self.downsampling_factor)
 
     def __len__(self):
@@ -66,10 +66,10 @@ class SVSTileDataset(Dataset):
         )
         tile = tile.convert("RGB")  # Convert to RGB if it's not already
 
-        # reshape the tile to the desired size
-        tile = tile.resize(
-            (self.tile_size, self.tile_size)
-        )  # this the stage when the downsampling happens˝
+        # # reshape the tile to the desired size # TODO this is in general a necessary step and can be a bottleneck
+        # tile = tile.resize(
+        #     (self.tile_size, self.tile_size)
+        # )  # this the stage when the downsampling happens˝
 
         # Convert to numpy array for easier manipulation (e.g., transformations)
         tile = np.array(tile)
