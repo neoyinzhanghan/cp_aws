@@ -216,7 +216,7 @@ for i, batch in tqdm(
     task = worker.async_tile_batch.remote(batch)
     tasks[task] = batch
 
-with tqdm(total=len(patch_grids_batches), desc="Extracting features") as pbar:
+with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
     while tasks:
         done_ids, _ = ray.wait(list(tasks.keys()))
 
