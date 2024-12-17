@@ -2,6 +2,7 @@ import os
 import ray
 import h5py
 import torch
+import pyvips
 import openslide
 import numpy as np
 import pandas as pd
@@ -148,7 +149,7 @@ class TilingWorker:
 
     def __init__(self, svs_path):
         self.svs_path = svs_path
-        self.svs = openslide.OpenSlide(svs_path)
+        self.svs = pyvips.Image.openslideload(self.svs_path, level=0)
 
     def async_tile(self, x, y, tile_size=224):
         """
@@ -170,18 +171,23 @@ class TilingWorker:
         tiles = []
 
         for x, y in batch:
-            tile = self.svs.read_region(
-                (int(x), int(y)), level=0, size=(tile_size, tile_size)
+            x = int(x)
+            y = int(y)
+
+            # Crop the region directly into a NumPy array
+            region = self.svs.crop(x, y, tile_size, tile_size).colourspace("srgb")
+
+            # Convert to NumPy array
+            region_np = np.ndarray(
+                buffer=region.write_to_memory(),
+                dtype=np.uint8,
+                shape=[tile_size, tile_size, 3],
             )
 
-            # if RGBA convert to RGB
-            if tile.mode == "RGBA":
-                tile = tile.convert("RGB")
-
-            tiles.append(tile)
+            tiles.append(region_np)
 
         tensor_stack = torch.stack(
-            [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in tiles]
+            [torch.tensor(tile).permute(2, 0, 1) for tile in tiles]
         )
 
         tensor_batches = batching_tensor_stack(tensor_stack, sub_batch_size)
