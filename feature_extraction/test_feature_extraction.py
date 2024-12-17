@@ -236,6 +236,15 @@ with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
 
 print(len(all_results))
 
+tile_batches = create_list_of_batches_from_list(all_results, 32)
+
+for i, batch in tqdm(
+    enumerate(tile_batches), desc="Preparing tasks", total=len(all_results)
+):
+    stack = torch.stack(
+        [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in batch]
+    )
+
 # print("Creating the dataset...")
 # # Create the dataset
 # dataset = SVSTileDataset(
