@@ -165,20 +165,20 @@ class TilingWorker:
 
             tiles.append(tiles)
 
-        tiles_batches = create_list_of_batches_from_list(tiles, sub_batch_size)
+        # tiles_batches = create_list_of_batches_from_list(tiles, sub_batch_size)
 
-        tensor_batches = []
+        # tensor_batches = []
 
-        for tiles_batch in tiles_batches:
-            # tiles_batch is a list of tiles as PIL images, convert them to a stacked tensor of shape [sub_batch_size, 3, tile_size, tile_size]
+        # for tiles_batch in tiles_batches:
+        #     # tiles_batch is a list of tiles as PIL images, convert them to a stacked tensor of shape [sub_batch_size, 3, tile_size, tile_size]
 
-            tiles_batch = torch.stack(
-                [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in tiles_batch]
-            )
+        #     tensor_stack = torch.stack(
+        #         [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in tiles_batch]
+        #     )
 
-            tensor_batches.append(tiles_batch)
+        #     tensor_batches.append(tensor_stack)
 
-        return tensor_batches
+        return tiles, len(batch)
 
 
 num_tilers = 128
