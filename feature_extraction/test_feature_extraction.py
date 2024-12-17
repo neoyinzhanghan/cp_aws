@@ -244,7 +244,7 @@ with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
 tile_batches = create_list_of_batches_from_list(all_results, 32)
 
 for i, batch in tqdm(
-    enumerate(tile_batches), desc="Stacking Tensors", total=len(all_results)
+    enumerate(tile_batches), desc="Stacking Tensors", total=len(tile_batches)
 ):
 
     stack = torch.stack(
