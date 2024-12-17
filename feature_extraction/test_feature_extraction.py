@@ -138,7 +138,7 @@ print(f"Output shape: {output.shape}")
 print(f"Output: {output}")
 
 
-@ray.remote
+@ray.remote(num_gpus=1)
 def UNIFeatureExtractionWorker():
     """Class for extracting features from tiles using UNI model
     === Class Attributes ===
@@ -150,7 +150,7 @@ def UNIFeatureExtractionWorker():
         self.model = load_model()
         self.model.to("cuda")
 
-    def extract_features(self, batch):
+    def async_extract_features(self, batch):
         """Extract features from a batch of tiles
         Args:
             - batch: torch.Tensor: a batch of tiles
@@ -182,7 +182,7 @@ new_focus_regions = []
 
 for i, batch in enumerate(dataloader):
     worker = feature_extraction_workers[i % num_feature_extractors]
-    task = worker.extract_features.remote(batch)
+    task = worker.async_extract_features.remote(batch)
     tasks[task] = batch
 
 with tqdm(total=len(dataset), desc="Extracting features") as pbar:
