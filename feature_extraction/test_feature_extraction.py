@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from PIL import Image
+from uni import load_model
 
 
 class SVSTileDataset(Dataset):
@@ -102,6 +103,12 @@ dataset = SVSTileDataset(
     transform=None,
 )
 
+print("Load the model...")
+# Load the model
+model = load_model()
+# move the model to the GPU
+model.to("cuda")
+
 print("Getting the first sample...")
 # get the first sample and then print the type and shape of the tile
 sample = dataset[0]
@@ -109,10 +116,21 @@ print(f"Type: {type(sample[0])}, Shape: {sample[0].shape}")
 
 
 dataloader = torch.utils.data.DataLoader(
-    dataset, batch_size=512, shuffle=True, num_workers=128
+    dataset, batch_size=512, shuffle=True, num_workers=200
 )
 
 # get the first batch and print the shape
 batch = next(iter(dataloader))
 
 print(f"Batch shape: {batch.shape}")
+
+print(f"Moving the batch to the GPU...")
+# move the batch to the GPU
+batch = batch.to("cuda")
+
+print(f"Getting the features...")
+# get the features
+output = model(batch)
+
+print(f"Output shape: {output.shape}")
+print(f"Output: {output}")
