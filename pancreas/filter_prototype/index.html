@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSI Metadata Viewer</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WSI Metadata Viewer</h1>
+
+    <label for="groupSelect">Select Group:</label>
+    <select id="groupSelect">
+        <option value="">-- Select Group --</option>
+    </select>
+
+    <label for="slideSelect">Select Slide:</label>
+    <select id="slideSelect" disabled>
+        <option value="">-- Select Slide --</option>
+    </select>
+
+    <button id="selectSlideBtn" disabled>Select Slide</button>
+    <p id="selectedSlideDetails"></p>
+
+    <script>
+        $(document).ready(function () {
+            // Fetch groups and populate the group dropdown
+            $.getJSON('https://neo-yin.com/get_groups', function (groups) {
+                const groupSelect = $('#groupSelect');
+                groups.forEach(group => {
+                    groupSelect.append(new Option(group, group));
+                });
+            });
+
+            // Handle group selection
+            $('#groupSelect').change(function () {
+                const selectedGroup = $(this).val();
+                const slideSelect = $('#slideSelect');
+                slideSelect.empty().append(new Option('-- Select Slide --', ''));
+
+                if (selectedGroup) {
+                    // Fetch slides for the selected group
+                    $.ajax({
+                        url: 'https://neo-yin.com/get_slides',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ group: selectedGroup }),
+                        success: function (slides) {
+                            slides.forEach(slide => {
+                                slideSelect.append(new Option(slide.display_name, slide.display_name));
+                            });
+                            slideSelect.prop('disabled', false);
+                            $('#selectSlideBtn').prop('disabled', true);
+                        }
+                    });
+                } else {
+                    slideSelect.prop('disabled', true);
+                    $('#selectSlideBtn').prop('disabled', true);
+                }
+            });
+
+            // Handle slide selection
+            $('#slideSelect').change(function () {
+                $('#selectSlideBtn').prop('disabled', !$(this).val());
+            });
+
+            // Handle select slide button click
+            $('#selectSlideBtn').click(function () {
+                const selectedSlide = $('#slideSelect').val();
+                if (selectedSlide) {
+                    $.ajax({
+                        url: 'https://neo-yin.com/select_slide',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ display_name: selectedSlide }),
+                        success: function (response) {
+                            $('#selectedSlideDetails').text(
+                                `Selected Slide: ${response.case_name}, Benign Probability: ${response.benign_prob}, Malignant Probability: ${response.malignant_prob}`
+                            );
+                        },
+                        error: function (xhr, status, error) {
+                            console.error(`Error: ${error}`);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
