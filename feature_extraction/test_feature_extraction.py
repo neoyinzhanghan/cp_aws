@@ -108,7 +108,9 @@ sample = dataset[0]
 print(f"Type: {type(sample[0])}, Shape: {sample[0].shape}")
 
 
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+dataloader = torch.utils.data.DataLoader(
+    dataset, batch_size=512, shuffle=True, num_workers=128
+)
 
 # get the first batch and print the shape
 batch = next(iter(dataloader))
