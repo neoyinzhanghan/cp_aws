@@ -84,7 +84,7 @@ class SVSTileDataset(Dataset):
             2, 0, 1
         )  # Change shape to CxHxW
 
-        return tile, x, y
+        return tile  # TODO you might want to add some other metadata here to be tracked but these should not non-negligibly contribute to the overall runtime
 
 
 patch_grid_csv = (
@@ -106,3 +106,11 @@ print("Getting the first sample...")
 # get the first sample and then print the type and shape of the tile
 sample = dataset[0]
 print(f"Type: {type(sample[0])}, Shape: {sample[0].shape}")
+
+
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+
+# get the first batch and print the shape
+batch = next(iter(dataloader))
+
+print(f"Batch shape: {batch.shape}")
