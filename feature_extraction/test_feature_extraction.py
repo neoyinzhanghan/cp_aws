@@ -5,9 +5,11 @@ import torch
 import openslide
 import numpy as np
 import pandas as pd
-from torch.utils.data import Dataset
 from PIL import Image
+from tqdm import tqdm
 from uni import load_model
+from torch.utils.data import Dataset
+from ray.exceptions import RayTaskError
 
 
 class SVSTileDataset(Dataset):
@@ -134,3 +136,73 @@ output = model(batch)
 
 print(f"Output shape: {output.shape}")
 print(f"Output: {output}")
+
+
+@ray.remote
+def UNIFeatureExtractionWorker():
+    """Class for extracting features from tiles using UNI model
+    === Class Attributes ===
+    - model: UNIExtractor: the UNI model
+    """
+
+    def __init__(self):
+        """Initialize the UNIFeatureExtractionWorker"""
+        self.model = load_model()
+        self.model.to("cuda")
+
+    def extract_features(self, batch):
+        """Extract features from a batch of tiles
+        Args:
+            - batch: torch.Tensor: a batch of tiles
+        Returns:
+            - torch.Tensor: the features extracted from the tiles
+        """
+        # move the batch to the GPU
+        batch = batch.to("cuda")
+
+        # get the features
+        output = self.model(batch)
+
+        return output
+
+
+ray.shutdown()
+# ray.init(num_cpus=num_cpus, num_gpus=num_gpus)
+ray.init()
+
+num_feature_extractors = 8
+
+feature_extraction_workers = [
+    UNIFeatureExtractionWorker.remote() for _ in range(num_feature_extractors)
+]
+
+tasks = {}
+all_results = []
+new_focus_regions = []
+
+for i, batch in enumerate(dataloader):
+    worker = feature_extraction_workers[i % num_feature_extractors]
+    task = worker.extract_features.remote(batch)
+    tasks[task] = batch
+
+with tqdm(total=len(dataset), desc="Extracting features") as pbar:
+    while tasks:
+        done_ids, _ = ray.wait(list(tasks.keys()))
+
+        for done_id in done_ids:
+            try:
+                batch_features = ray.get(
+                    done_id
+                )  # this has dimension [batch_size, feature_size]
+
+                all_results.append(batch_features)
+
+                pbar.update(batch_features.shape[0])
+
+            except RayTaskError as e:
+                print(f"Task for focus {tasks[done_id]} failed with error: {e}")
+
+            del tasks[done_id]
+
+# all features have dimension [batch_size, feature_size], concatenate them along the batch dimension to get [num_samples, feature_size]
+all_results = torch.cat(all_results, dim=0)
