@@ -356,10 +356,13 @@ tasks = {}
 all_results = []
 new_focus_regions = []
 
-for i, batch in tqdm(enumerate(dataloader), desc="Preparing tasks", total=len(dataset)):
-    worker = feature_extraction_workers[i % num_feature_extractors]
-    task = worker.async_extract_features.remote(batch)
-    tasks[task] = batch
+with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
+    for i, batch in enumerate(dataloader):
+        worker = feature_extraction_workers[i % num_feature_extractors]
+        task = worker.async_extract_features.remote(batch)
+        tasks[task] = batch
+
+        pbar.update(batch.shape[0])
 
 with tqdm(total=len(dataset), desc="Extracting features") as pbar:
     while tasks:
