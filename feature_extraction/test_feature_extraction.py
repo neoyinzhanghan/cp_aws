@@ -135,7 +135,7 @@ class TilingWorker:
         self.svs_path = svs_path
         self.svs = openslide.OpenSlide(svs_path)
 
-    def async_tile(self, x, y, tile_size):
+    def async_tile(self, x, y, tile_size=224):
         """
         Get a tile from the SVS file at the given coordinates
 
@@ -151,7 +151,7 @@ class TilingWorker:
 
         return np.array(tile)
 
-    def async_tile_batch(self, batch, tile_size, sub_batch_size):
+    def async_tile_batch(self, batch, tile_size=224, sub_batch_size=32):
         tiles = []
 
         for x, y in batch:
