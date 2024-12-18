@@ -105,39 +105,36 @@ class SVSTileDataset(Dataset):
             x_int + self.level_0_tile_size > self.level_0_width
             and y_int + self.level_0_tile_size > self.level_0_height
         ):
-            tile = self.svs.read_region(
-                (x, y), level=0, size=(self.level_0_tile_size, self.level_0_tile_size)
+            tile = self.svs.crop(
+                x, y, self.level_0_tile_size, self.level_0_tile_size
+            ).colourspace("srgb")
+
+            tile_np = np.ndarray(
+                buffer=tile.write_to_memory(),
+                dtype=np.uint8,
+                shape=[self.level_0_tile_size, self.level_0_tile_size, 3],
             )
 
-            tile = tile.convert("RGB")  # Convert to RGB if it's not already
         else:
             tile = self.svs.crop(
                 x,
                 y,
                 min(self.level_0_tile_size, self.level_0_width - x),
                 min(self.level_0_tile_size, self.level_0_height - y),
+            ).colourspace("srgb")
+
+            tile_np = np.ndarray(
+                buffer=tile.write_to_memory(),
+                dtype=np.uint8,
+                shape=[tile.height, tile.width, 3],
             )
-
-            tile = tile.convert("RGB")  # Convert to RGB if it's not already
-
-            tile = tile.resize(
-                self.tile_size / min(self.level_0_tile_size, self.level_0_width - x)
-            )
-
-        # # reshape the tile to the desired size # TODO this is in general a necessary step and can be a bottleneck
-        # tile = tile.resize(
-        #     (self.tile_size, self.tile_size)
-        # )  # this the stage when the downsampling happens˝
-
-        # Convert to numpy array for easier manipulation (e.g., transformations)
-        tile = np.array(tile)
 
         # Apply the transformation if provided
         if self.transform:
-            tile = self.transform(tile)
+            tile_np = self.transform(tile_np)
 
         # Convert to PyTorch tensor
-        tile = torch.tensor(tile, dtype=torch.float32).permute(
+        tile = torch.tensor(tile_np, dtype=torch.float32).permute(
             2, 0, 1
         )  # Change shape to CxHxW
 
