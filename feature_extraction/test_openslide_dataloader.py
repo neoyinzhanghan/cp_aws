@@ -149,10 +149,6 @@ if __name__ == "__main__":
         transform=None,
     )
 
-    import sys
-
-    sys.exit()
-
     dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=True, num_workers=num_cpus
     )
