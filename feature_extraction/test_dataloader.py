@@ -19,8 +19,8 @@ wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
 
 
 num_feature_extractors = 8
-batch_size = 256
-num_cpus = 200
+batch_size = 200
+num_cpus = 100
 num_gpus = 8
 
 
@@ -162,12 +162,10 @@ if __name__ == "__main__":
     all_results = []
     new_focus_regions = []
 
-    subbatch_idx = 0
     with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
         for i, batch in enumerate(dataloader):
             worker = feature_extraction_workers[i % num_feature_extractors]
             task = worker.async_extract_features.remote(batch)
-            subbatch_idx += 1
             tasks[task] = batch
 
             pbar.update(batch.shape[0])
