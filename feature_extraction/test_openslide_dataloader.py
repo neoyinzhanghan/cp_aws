@@ -70,7 +70,7 @@ class SVSTileDataset(Dataset):
         self.transform = transform
         original_csv = pd.read_csv(csv_path)
         # only keep the rows where the include column is equal to True
-        self.csv = self.csv[original_csv["include"] == True]
+        self.csv = original_csv[original_csv["include"] == True]
 
         self.mpp = mpp
 
