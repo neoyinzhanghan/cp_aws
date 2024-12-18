@@ -20,7 +20,7 @@ wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
 
 num_feature_extractors = 8
 batch_size = 256
-sub_batch_size = 64
+sub_batch_size = 32
 num_cpus = 128
 num_gpus = 8
 
@@ -38,6 +38,39 @@ def batching_tensor_stack(tensor_stack, batch_size):
         batches.append(batch)
 
     return batches
+
+
+@ray.remote(num_gpus=1)
+class UNIFeatureExtractionWorker:
+    """Class for extracting features from tiles using UNI model
+    === Class Attributes ===
+    - model: UNIExtractor: the UNI model
+    """
+
+    def __init__(self):
+        """Initialize the UNIFeatureExtractionWorker"""
+        self.model = load_model()
+        self.model.to("cuda")
+
+    def async_extract_features(self, batch):
+        """Extract features from a batch of tiles
+        Args:
+            - batch: torch.Tensor: a batch of tiles
+        Returns:
+            - torch.Tensor: the features extracted from the tiles
+        """
+        # move the batch to the GPU
+        batch = batch.to("cuda")
+
+        # get the features
+        output = self.model(batch)
+
+        # delete teh batch from the GPU
+
+        # move the output to the CPU
+        output = output.to("cpu")
+
+        return output
 
 
 class SVSTileDataset(Dataset):
@@ -128,117 +161,51 @@ dataset = SVSTileDataset(
     transform=None,
 )
 
-# print the length of the dataset
-print(f"Length of the dataset: {len(dataset)}")
+if __name__ == "__main__":
 
-print("Load the model...")
-# Load the model
-model = load_model()
-# move the model to the GPU
-model.to("cuda")
+    dataloader = torch.utils.data.DataLoader(
+        dataset, batch_size=batch_size, shuffle=True, num_workers=num_cpus
+    )
 
-print("Getting the first sample...")
-# get the first sample and then print the type and shape of the tile
-sample = dataset[0]
-print(f"Type: {type(sample[0])}, Shape: {sample[0].shape}")
+    ray.init()
 
+    feature_extraction_workers = [
+        UNIFeatureExtractionWorker.remote() for _ in range(num_feature_extractors)
+    ]
 
-dataloader = torch.utils.data.DataLoader(
-    dataset, batch_size=batch_size, shuffle=True, num_workers=num_cpus
-)
+    tasks = {}
+    all_results = []
+    new_focus_regions = []
 
-# get the first batch and print the shape
-batch = next(iter(dataloader))
+    with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
+        for i, batch in enumerate(dataloader):
+            worker = feature_extraction_workers[i % num_feature_extractors]
 
-print(f"Batch shape: {batch.shape}")
+            sub_batches = batching_tensor_stack(batch, sub_batch_size)
+            for sub_batch in sub_batches:
+                task = worker.async_extract_features.remote(batch)
+            tasks[task] = batch
 
-print(f"Moving the batch to the GPU...")
-# move the batch to the GPU
-batch = batch.to("cuda")
+            pbar.update(batch.shape[0])
 
-print(f"Getting the features...")
-# get the features
-output = model(batch)
+    with tqdm(total=len(dataset), desc="Extracting features") as pbar:
+        while tasks:
+            done_ids, _ = ray.wait(list(tasks.keys()))
 
-print(f"Output shape: {output.shape}")
-print(f"Output: {output}")
+            for done_id in done_ids:
+                try:
+                    batch_features = ray.get(
+                        done_id
+                    )  # this has dimension [batch_size, feature_size]
 
+                    all_results.append(batch_features)
 
-@ray.remote(num_gpus=1)
-class UNIFeatureExtractionWorker:
-    """Class for extracting features from tiles using UNI model
-    === Class Attributes ===
-    - model: UNIExtractor: the UNI model
-    """
+                    pbar.update(batch_features.shape[0])
 
-    def __init__(self):
-        """Initialize the UNIFeatureExtractionWorker"""
-        self.model = load_model()
-        self.model.to("cuda")
+                except RayTaskError as e:
+                    print(f"Task for focus {tasks[done_id]} failed with error: {e}")
 
-    def async_extract_features(self, batch):
-        """Extract features from a batch of tiles
-        Args:
-            - batch: torch.Tensor: a batch of tiles
-        Returns:
-            - torch.Tensor: the features extracted from the tiles
-        """
-        # move the batch to the GPU
-        batch = batch.to("cuda")
+                del tasks[done_id]
 
-        # get the features
-        output = self.model(batch)
-
-        # delete teh batch from the GPU
-
-        # move the output to the CPU
-        output = output.to("cpu")
-
-        return output
-
-
-ray.shutdown()
-# ray.init(num_cpus=num_cpus, num_gpus=num_gpus)
-ray.init()
-
-
-feature_extraction_workers = [
-    UNIFeatureExtractionWorker.remote() for _ in range(num_feature_extractors)
-]
-
-tasks = {}
-all_results = []
-new_focus_regions = []
-
-with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
-    for i, batch in enumerate(dataloader):
-        worker = feature_extraction_workers[i % num_feature_extractors]
-
-        sub_batches = batching_tensor_stack(batch, sub_batch_size)
-        for sub_batch in sub_batches:
-            task = worker.async_extract_features.remote(batch)
-        tasks[task] = batch
-
-        pbar.update(batch.shape[0])
-
-with tqdm(total=len(dataset), desc="Extracting features") as pbar:
-    while tasks:
-        done_ids, _ = ray.wait(list(tasks.keys()))
-
-        for done_id in done_ids:
-            try:
-                batch_features = ray.get(
-                    done_id
-                )  # this has dimension [batch_size, feature_size]
-
-                all_results.append(batch_features)
-
-                pbar.update(batch_features.shape[0])
-
-            except RayTaskError as e:
-                print(f"Task for focus {tasks[done_id]} failed with error: {e}")
-
-            del tasks[done_id]
-
-# all features have dimension [batch_size, feature_size], concatenate them along the batch dimension to get [num_samples, feature_size]
-all_results = torch.cat(all_results, dim=0)
+    # all features have dimension [batch_size, feature_size], concatenate them along the batch dimension to get [num_samples, feature_size]
+    all_results = torch.cat(all_results, dim=0)
