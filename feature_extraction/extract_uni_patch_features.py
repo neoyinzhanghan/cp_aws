@@ -233,7 +233,7 @@ if __name__ == "__main__":
     extract_uni_features(
         wsi_path=wsi_path,
         patch_grid_csv_path=patch_grid_csv,
-        h5_path=h5_path,
+        h5_save_path=h5_path,
         batch_size=batch_size,
         num_cpus=num_cpus,
         num_gpus=num_gpus,
