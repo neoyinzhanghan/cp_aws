@@ -66,6 +66,7 @@ class UNIFeatureExtractionWorker:
         output = self.model(batch)
 
         # delete teh batch from the GPU
+        del batch
 
         # move the output to the CPU
         output = output.to("cpu")
