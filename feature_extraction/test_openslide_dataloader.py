@@ -37,8 +37,10 @@ class UNIFeatureExtractionWorker:
         # move the batch to the GPU
         batch = batch.to("cuda")
 
+        input_stack, xs, ys = batch
+
         # get the features
-        output = self.model(batch)
+        output = self.model(input_stack)
 
         # delete teh batch from the GPU
         del batch
@@ -46,7 +48,7 @@ class UNIFeatureExtractionWorker:
         # move the output to the CPU
         output = output.detach().to("cpu")
 
-        return output
+        return output, xs, ys
 
 
 class SVSTileDataset(Dataset):
@@ -125,10 +127,95 @@ class SVSTileDataset(Dataset):
             2, 0, 1
         )  # Change shape to CxHxW
 
-        return tile  # TODO you might want to add some other metadata here to be tracked but these should not non-negligibly contribute to the overall runtime
+        return (
+            tile,
+            x,
+            y,
+        )  # TODO you might want to add some other metadata here to be tracked but these should not non-negligibly contribute to the overall runtime
+
+
+def extract_uni_features(
+    wsi_path,
+    patch_grid_csv_path,
+    h5_save_path,
+    batch_size=200,
+    num_cpus=100,
+    num_gpus=8,
+):
+
+    dataset = SVSTileDataset(
+        svs_path=wsi_path,
+        csv_path=patch_grid_csv_path,
+        mpp=0.5,
+        tile_size=224,
+        transform=None,
+    )
+
+    dataloader = torch.utils.data.DataLoader(
+        dataset, batch_size=batch_size, shuffle=True, num_workers=num_cpus
+    )
+
+    ray.init()
+
+    feature_extraction_workers = [
+        UNIFeatureExtractionWorker.remote() for _ in range(num_gpus)
+    ]
+
+    tasks = {}
+    all_results = []
+    all_xs = []
+    all_ys = []
+
+    with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
+        for i, batch in enumerate(dataloader):
+            worker = feature_extraction_workers[i % num_gpus]
+            task = worker.async_extract_features.remote(batch)
+            tasks[task] = batch
+
+            pbar.update(batch.shape[0])
+
+    with tqdm(total=len(dataset), desc="Extracting features") as pbar:
+        while tasks:
+            done_ids, _ = ray.wait(list(tasks.keys()))
+
+            for done_id in done_ids:
+                try:
+                    batch_features, xs, ys = ray.get(
+                        done_id
+                    )  # this has dimension [batch_size, feature_size]
+
+                    all_results.append(batch_features)
+                    all_xs.append(xs)
+                    all_ys.append(ys)
+
+                    pbar.update(batch_features.shape[0])
+
+                except RayTaskError as e:
+                    print(f"Task for focus {tasks[done_id]} failed with error: {e}")
+
+                del tasks[done_id]
+
+    # all features have dimension [batch_size, feature_size], concatenate them along the batch dimension to get [num_samples, feature_size]
+    all_results = torch.cat(all_results, dim=0)
+    all_xs = np.concatenate(all_xs)
+    all_ys = np.concatenate(all_ys)
+
+    all_results = all_results.detach().numpy()
+    all_xs = all_xs.flatten()
+    all_ys = all_ys.flatten()
+
+    # save_all_results as an h5 file at h5_path
+    with h5py.File(h5_save_path, "w") as f:
+        f.create_dataset("features", data=all_results)
+        f.create_dataset("xs", data=all_xs)
+        f.create_dataset("ys", data=all_ys)
+
+    print(f"Process took {time.time() - start_time} seconds to finish.")
 
 
 if __name__ == "__main__":
+
+    ### USAGE EXAMPLE
 
     patch_grid_csv = "/home/dog/Documents/huong/analysis/visualization/website/mayo/K106022_coords.csv"
     wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
@@ -143,63 +230,13 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    # Create the dataset
-    dataset = SVSTileDataset(
-        svs_path=wsi_path,
-        csv_path=patch_grid_csv,
-        mpp=0.5,
-        tile_size=224,
-        transform=None,
+    extract_uni_features(
+        wsi_path=wsi_path,
+        patch_grid_csv_path=patch_grid_csv,
+        h5_path=h5_path,
+        batch_size=batch_size,
+        num_cpus=num_cpus,
+        num_gpus=num_gpus,
     )
-
-    dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=True, num_workers=num_cpus
-    )
-
-    ray.init()
-
-    feature_extraction_workers = [
-        UNIFeatureExtractionWorker.remote() for _ in range(num_feature_extractors)
-    ]
-
-    tasks = {}
-    all_results = []
-    new_focus_regions = []
-
-    with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
-        for i, batch in enumerate(dataloader):
-            worker = feature_extraction_workers[i % num_feature_extractors]
-            task = worker.async_extract_features.remote(batch)
-            tasks[task] = batch
-
-            pbar.update(batch.shape[0])
-
-    with tqdm(total=len(dataset), desc="Extracting features") as pbar:
-        while tasks:
-            done_ids, _ = ray.wait(list(tasks.keys()))
-
-            for done_id in done_ids:
-                try:
-                    batch_features = ray.get(
-                        done_id
-                    )  # this has dimension [batch_size, feature_size]
-
-                    all_results.append(batch_features)
-
-                    pbar.update(batch_features.shape[0])
-
-                except RayTaskError as e:
-                    print(f"Task for focus {tasks[done_id]} failed with error: {e}")
-
-                del tasks[done_id]
-
-    # all features have dimension [batch_size, feature_size], concatenate them along the batch dimension to get [num_samples, feature_size]
-    all_results = torch.cat(all_results, dim=0)
-
-    all_results = all_results.detach().numpy()
-
-    # save_all_results as an h5 file at h5_path
-    with h5py.File(h5_path, "w") as f:
-        f.create_dataset("features", data=all_results)
 
     print(f"Process took {time.time() - start_time} seconds to finish.")
