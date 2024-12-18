@@ -12,17 +12,6 @@ from uni import load_model
 from torch.utils.data import Dataset
 from ray.exceptions import RayTaskError
 
-patch_grid_csv = (
-    "/home/dog/Documents/huong/analysis/visualization/website/mayo/K106022_coords.csv"
-)
-wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
-
-
-num_feature_extractors = 8
-batch_size = 200
-num_cpus = 100
-num_gpus = 8
-
 
 @ray.remote(num_gpus=1)
 class UNIFeatureExtractionWorker:
@@ -82,6 +71,7 @@ class SVSTileDataset(Dataset):
         self.csv = pd.read_csv(csv_path)
         # only keep the rows where the include column is equal to True
         self.csv = self.csv[self.csv["include"] == True]
+
         self.mpp = mpp
 
         self.svs = openslide.OpenSlide(svs_path)
@@ -93,6 +83,23 @@ class SVSTileDataset(Dataset):
         # assert self.mpp > self.level_0_mpp, "mpp should be greater than the level 0 mpp" # Generally this must be checked
         self.downsampling_factor = 1  # self.mpp / self.level_0_mpp <<< generally we do not want to assume this TODO
         self.level_0_tile_size = int(tile_size * self.downsampling_factor)
+
+        # get the level 0 width and height of the slide
+        width, height = self.svs.dimensions
+
+        # add a column to the csv with the x_end, y_end coordinates which is x + level_0_tile_size, y + level_0_tile_size
+        self.csv["x_end"] = self.csv["x"] + self.level_0_tile_size
+        self.csv["y_end"] = self.csv["y"] + self.level_0_tile_size
+
+        # filter out the rows where the x_end and y_end are greater than the width and height of the slide
+        self.csv = self.csv[
+            (self.csv["x_end"] <= width) & (self.csv["y_end"] <= height)
+        ]
+
+        # print how many tiles are actually out of bounds
+        print(
+            f"Number of tiles out of bounds: {len(self.csv) - len(self.csv[(self.csv['x_end'] <= width) & (self.csv['y_end'] <= height)])}"
+        )
 
     def __len__(self):
         # The length of the dataset is the number of rows in the metadata CSV
@@ -136,17 +143,28 @@ class SVSTileDataset(Dataset):
         return tile  # TODO you might want to add some other metadata here to be tracked but these should not non-negligibly contribute to the overall runtime
 
 
-print("Creating the dataset...")
-# Create the dataset
-dataset = SVSTileDataset(
-    svs_path=wsi_path,
-    csv_path=patch_grid_csv,
-    mpp=0.5,
-    tile_size=224,
-    transform=None,
-)
-
 if __name__ == "__main__":
+
+    patch_grid_csv = "/home/dog/Documents/huong/analysis/visualization/website/mayo/K106022_coords.csv"
+    wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
+
+    num_feature_extractors = 8
+    batch_size = 200
+    num_cpus = 100
+    num_gpus = 8
+
+    import time
+
+    start_time = time.time()
+
+    # Create the dataset
+    dataset = SVSTileDataset(
+        svs_path=wsi_path,
+        csv_path=patch_grid_csv,
+        mpp=0.5,
+        tile_size=224,
+        transform=None,
+    )
 
     dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=True, num_workers=num_cpus
@@ -191,3 +209,5 @@ if __name__ == "__main__":
 
     # all features have dimension [batch_size, feature_size], concatenate them along the batch dimension to get [num_samples, feature_size]
     all_results = torch.cat(all_results, dim=0)
+
+    print(f"Process took {time.time() - start_time} seconds to finish.")
