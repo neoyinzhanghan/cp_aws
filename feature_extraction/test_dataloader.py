@@ -19,21 +19,9 @@ wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
 
 
 num_feature_extractors = 8
-batch_size = 512
-sub_batch_size = 128
+batch_size = 256
 num_cpus = 200
 num_gpus = 8
-
-
-def batching_tensor_stack(tensor_stack, batch_size):
-    """
-    The tensor stack has shape [num_samples, C, H, W]
-    Batch the tensor stack into batches of size batch_size
-    """
-    # Use torch.split to split the tensor stack into batches
-    batches = torch.split(tensor_stack, batch_size, dim=0)
-
-    return batches
 
 
 @ray.remote(num_gpus=1)
@@ -177,15 +165,10 @@ if __name__ == "__main__":
     subbatch_idx = 0
     with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
         for i, batch in enumerate(dataloader):
-            sub_batches = batching_tensor_stack(batch, sub_batch_size)
-
-            for sub_batch in sub_batches:
-                worker = feature_extraction_workers[
-                    subbatch_idx % num_feature_extractors
-                ]
-                task = worker.async_extract_features.remote(sub_batch)
-                subbatch_idx += 1
-            tasks[task] = sub_batch
+            worker = feature_extraction_workers[i % num_feature_extractors]
+            task = worker.async_extract_features.remote(batch)
+            subbatch_idx += 1
+            tasks[task] = batch
 
             pbar.update(batch.shape[0])
 
