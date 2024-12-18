@@ -76,9 +76,6 @@ class SVSTileDataset(Dataset):
         # only keep the rows where the include column is equal to True
         self.csv = original_csv[original_csv["include"] == True]
 
-        # duplicate the csv files 10 times to make the dataset larger
-        self.csv = pd.concat([self.csv] * 10, ignore_index=True)
-
         self.mpp = mpp
 
         self.svs = openslide.OpenSlide(svs_path)
@@ -119,7 +116,7 @@ class SVSTileDataset(Dataset):
         # )  # this the stage when the downsampling happens˝
 
         # Convert to numpy array for easier manipulation (e.g., transformations)
-        tile = np.asarray(tile)
+        tile = np.array(tile)
 
         # Apply the transformation if provided
         if self.transform:
