@@ -34,16 +34,16 @@ class UNIFeatureExtractionWorker:
         Returns:
             - torch.Tensor: the features extracted from the tiles
         """
-        # move the batch to the GPU
-        batch = batch.to("cuda")
 
         input_stack, xs, ys = batch
+
+        input_stack = input_stack.to("cuda")
 
         # get the features
         output = self.model(input_stack)
 
         # delete teh batch from the GPU
-        del batch
+        del input_stack
 
         # move the output to the CPU
         output = output.detach().to("cpu")
