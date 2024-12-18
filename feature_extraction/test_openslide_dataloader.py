@@ -84,23 +84,6 @@ class SVSTileDataset(Dataset):
         self.downsampling_factor = 1  # self.mpp / self.level_0_mpp <<< generally we do not want to assume this TODO
         self.level_0_tile_size = int(tile_size * self.downsampling_factor)
 
-        # get the level 0 width and height of the slide
-        width, height = self.svs.dimensions
-
-        # add a column to the csv with the x_end, y_end coordinates which is x + level_0_tile_size, y + level_0_tile_size
-        self.csv["x_end"] = self.csv["x"] + self.level_0_tile_size
-        self.csv["y_end"] = self.csv["y"] + self.level_0_tile_size
-
-        # filter out the rows where the x_end and y_end are greater than the width and height of the slide
-        self.csv = self.csv[
-            (self.csv["x_end"] <= width) & (self.csv["y_end"] <= height)
-        ]
-
-        # print how many tiles are actually out of bounds
-        print(
-            f"Number of tiles out of bounds: {len(original_csv) - len(self.csv)} out of {len(original_csv)}"
-        )
-
     def __len__(self):
         # The length of the dataset is the number of rows in the metadata CSV
         return len(self.csv)
