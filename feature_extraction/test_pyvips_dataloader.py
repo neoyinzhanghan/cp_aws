@@ -148,6 +148,7 @@ if __name__ == "__main__":
 
     patch_grid_csv = "/home/dog/Documents/huong/analysis/visualization/website/mayo/K106022_coords.csv"
     wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
+    h5_path = "/home/dog/Documents/neo/test_feature_extraction.h5"
 
     num_feature_extractors = 8
     batch_size = 200
@@ -210,5 +211,9 @@ if __name__ == "__main__":
 
     # all features have dimension [batch_size, feature_size], concatenate them along the batch dimension to get [num_samples, feature_size]
     all_results = torch.cat(all_results, dim=0)
+
+    # save_all_results as an h5 file at h5_path
+    with h5py.File(h5_path, "w") as f:
+        f.create_dataset("features", data=all_results.numpy())
 
     print(f"Process took {time.time() - start_time} seconds to finish.")
