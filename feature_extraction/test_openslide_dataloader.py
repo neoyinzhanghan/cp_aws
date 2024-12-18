@@ -68,9 +68,9 @@ class SVSTileDataset(Dataset):
         self.csv_path = csv_path
         self.tile_size = tile_size
         self.transform = transform
-        self.csv = pd.read_csv(csv_path)
+        original_csv = pd.read_csv(csv_path)
         # only keep the rows where the include column is equal to True
-        self.csv = self.csv[self.csv["include"] == True]
+        self.csv = self.csv[original_csv["include"] == True]
 
         self.mpp = mpp
 
@@ -98,7 +98,7 @@ class SVSTileDataset(Dataset):
 
         # print how many tiles are actually out of bounds
         print(
-            f"Number of tiles out of bounds: {len(self.csv) - len(self.csv[(self.csv['x_end'] <= width) & (self.csv['y_end'] <= height)])}"
+            f"Number of tiles out of bounds: {len(original_csv) - len(self.csv)} out of {len(original_csv)}"
         )
 
     def __len__(self):
@@ -165,6 +165,10 @@ if __name__ == "__main__":
         tile_size=224,
         transform=None,
     )
+
+    import sys
+
+    sys.exit()
 
     dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=True, num_workers=num_cpus
