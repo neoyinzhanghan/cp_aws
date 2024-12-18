@@ -172,7 +172,7 @@ def extract_uni_features(
             task = worker.async_extract_features.remote(batch)
             tasks[task] = batch
 
-            pbar.update(batch.shape[0])
+            pbar.update(batch[0].shape[0])
 
     with tqdm(total=len(dataset), desc="Extracting features") as pbar:
         while tasks:
