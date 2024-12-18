@@ -19,7 +19,7 @@ wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
 
 
 num_feature_extractors = 8
-batch_size = 32
+batch_size = 128
 sub_batch_size = 32
 num_cpus = 128
 num_gpus = 8
