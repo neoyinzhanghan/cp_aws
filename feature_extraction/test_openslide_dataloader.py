@@ -44,7 +44,7 @@ class UNIFeatureExtractionWorker:
         del batch
 
         # move the output to the CPU
-        output = output.to("cpu")
+        output = output.detach().to("cpu")
 
         return output
 
@@ -196,8 +196,10 @@ if __name__ == "__main__":
     # all features have dimension [batch_size, feature_size], concatenate them along the batch dimension to get [num_samples, feature_size]
     all_results = torch.cat(all_results, dim=0)
 
+    all_results = all_results.detach().numpy()
+
     # save_all_results as an h5 file at h5_path
     with h5py.File(h5_path, "w") as f:
-        f.create_dataset("features", data=all_results.numpy())
+        f.create_dataset("features", data=all_results)
 
     print(f"Process took {time.time() - start_time} seconds to finish.")
