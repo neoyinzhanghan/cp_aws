@@ -178,16 +178,18 @@ if __name__ == "__main__":
     all_results = []
     new_focus_regions = []
 
+    subbatch_idx = 0
     with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
         for i, batch in enumerate(dataloader):
-            worker = feature_extraction_workers[i % num_feature_extractors]
-
             sub_batches = batching_tensor_stack(batch, sub_batch_size)
             for sub_batch in sub_batches:
+                worker = feature_extraction_workers[
+                    subbatch_idx % num_feature_extractors
+                ]
                 # which device is the sub_batch on?
                 device = sub_batch.device
-                print(device)
                 task = worker.async_extract_features.remote(batch)
+                subbatch_idx += 1
             tasks[task] = batch
 
             pbar.update(batch.shape[0])
