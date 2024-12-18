@@ -178,13 +178,14 @@ if __name__ == "__main__":
     with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
         for i, batch in enumerate(dataloader):
             sub_batches = batching_tensor_stack(batch, sub_batch_size)
+
             for sub_batch in sub_batches:
                 worker = feature_extraction_workers[
                     subbatch_idx % num_feature_extractors
                 ]
                 task = worker.async_extract_features.remote(sub_batch)
                 subbatch_idx += 1
-            tasks[task] = batch
+            tasks[task] = sub_batch
 
             pbar.update(batch.shape[0])
 
