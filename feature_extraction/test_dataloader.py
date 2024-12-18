@@ -19,23 +19,19 @@ wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
 
 
 num_feature_extractors = 8
-batch_size = 512
-sub_batch_size = 512
-num_cpus = 224
+batch_size = 400
+sub_batch_size = 400
+num_cpus = 200
 num_gpus = 8
 
 
 def batching_tensor_stack(tensor_stack, batch_size):
     """
-    The tensorstack has shape [num_samples, C, H, W]
+    The tensor stack has shape [num_samples, C, H, W]
     Batch the tensor stack into batches of size batch_size
     """
-
-    batches = []
-
-    for i in range(0, tensor_stack.shape[0], batch_size):
-        batch = tensor_stack[i : i + batch_size]
-        batches.append(batch)
+    # Use torch.split to split the tensor stack into batches
+    batches = torch.split(tensor_stack, batch_size, dim=0)
 
     return batches
 
@@ -186,9 +182,7 @@ if __name__ == "__main__":
                 worker = feature_extraction_workers[
                     subbatch_idx % num_feature_extractors
                 ]
-                # which device is the sub_batch on?
-                device = sub_batch.device
-                task = worker.async_extract_features.remote(batch)
+                task = worker.async_extract_features.remote(sub_batch)
                 subbatch_idx += 1
             tasks[task] = batch
 
