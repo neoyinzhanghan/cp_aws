@@ -210,8 +210,6 @@ def extract_uni_features(
         f.create_dataset("xs", data=all_xs)
         f.create_dataset("ys", data=all_ys)
 
-    print(f"Process took {time.time() - start_time} seconds to finish.")
-
 
 if __name__ == "__main__":
 
