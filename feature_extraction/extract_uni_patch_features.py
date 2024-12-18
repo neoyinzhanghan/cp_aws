@@ -116,7 +116,7 @@ class SVSTileDataset(Dataset):
         # )  # this the stage when the downsampling happens˝
 
         # Convert to numpy array for easier manipulation (e.g., transformations)
-        tile = np.array(tile)
+        tile = np.asarray(tile)
 
         # Apply the transformation if provided
         if self.transform:
