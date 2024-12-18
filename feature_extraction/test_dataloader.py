@@ -184,8 +184,9 @@ if __name__ == "__main__":
 
             sub_batches = batching_tensor_stack(batch, sub_batch_size)
             for sub_batch in sub_batches:
-
-                print(sub_batch.shape)
+                # which device is the sub_batch on?
+                device = sub_batch.device
+                print(device)
                 task = worker.async_extract_features.remote(batch)
             tasks[task] = batch
 
