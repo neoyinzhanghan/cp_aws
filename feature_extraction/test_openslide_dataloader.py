@@ -24,6 +24,8 @@ class UNIFeatureExtractionWorker:
         """Initialize the UNIFeatureExtractionWorker"""
         self.model = load_model()
         self.model.to("cuda")
+        # make sure the model is in evaluation mode
+        self.model.eval()
 
     def async_extract_features(self, batch):
         """Extract features from a batch of tiles
