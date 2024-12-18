@@ -18,31 +18,11 @@ patch_grid_csv = (
 wsi_path = "/media/ssd2/huong/mayo_bbd/test_visual/process_img_list/K106022.svs"
 
 
-def create_list_of_batches_from_list(list, batch_size):
-    """
-    This function creates a list of batches from a list.
-
-    :param list: a list
-    :param batch_size: the size of each batch
-    :return: a list of batches
-
-    >>> create_list_of_batches_from_list([1, 2, 3, 4, 5], 2)
-    [[1, 2], [3, 4], [5]]
-    >>> create_list_of_batches_from_list([1, 2, 3, 4, 5, 6], 3)
-    [[1, 2, 3], [4, 5, 6]]
-    >>> create_list_of_batches_from_list([], 3)
-    []
-    >>> create_list_of_batches_from_list([1, 2], 3)
-    [[1, 2]]
-    """
-
-    list_of_batches = []
-
-    for i in range(0, len(list), batch_size):
-        batch = list[i : i + batch_size]
-        list_of_batches.append(batch)
-
-    return list_of_batches
+num_feature_extractors = 8
+batch_size = 256
+sub_batch_size = 64
+num_cpus = 128
+num_gpus = 8
 
 
 def batching_tensor_stack(tensor_stack, batch_size):
@@ -138,131 +118,6 @@ class SVSTileDataset(Dataset):
         return tile  # TODO you might want to add some other metadata here to be tracked but these should not non-negligibly contribute to the overall runtime
 
 
-@ray.remote
-class TilingWorker:
-    """
-    === Attributes ===
-
-    svs_path (str): path to the SVS file
-    svs (openslide.OpenSlide): OpenSlide object for the SVS file
-    """
-
-    def __init__(self, svs_path):
-        self.svs_path = svs_path
-        self.svs = pyvips.Image.openslideload(self.svs_path, level=0)
-
-    def async_tile(self, x, y, tile_size=224):
-        """
-        Get a tile from the SVS file at the given coordinates
-
-        Args:
-            x (int): x-coordinate of the tile
-            y (int): y-coordinate of the tile
-            tile_size (int): size of the tile
-
-        Returns:
-            np.ndarray: the tile
-        """
-        tile = self.svs.read_region((x, y), level=0, size=(tile_size, tile_size))
-
-        return np.array(tile)
-
-    def async_tile_batch(self, batch, tile_size=224, sub_batch_size=32):
-        tiles = []
-
-        for x, y in batch:
-            x = int(x)
-            y = int(y)
-
-            # Crop the region directly into a NumPy array
-            region = self.svs.crop(x, y, tile_size, tile_size).colourspace("srgb")
-
-            # Convert to NumPy array
-            region_np = np.ndarray(
-                buffer=region.write_to_memory(),
-                dtype=np.uint8,
-                shape=[tile_size, tile_size, 3],
-            )
-
-            tiles.append(region_np)
-
-        tensor_stack = torch.stack(
-            [torch.tensor(tile).permute(2, 0, 1) for tile in tiles]
-        )
-
-        tensor_batches = batching_tensor_stack(tensor_stack, sub_batch_size)
-
-        return tensor_batches, len(batch)
-
-
-# num_tilers = 128
-# tiling_batch_size = 512
-
-# tiling_workers = [TilingWorker.remote(wsi_path) for _ in range(num_tilers)]
-
-# csv_path = (
-#     "/home/dog/Documents/huong/analysis/visualization/website/mayo/K106022_coords.csv"
-# )
-
-# # Load the CSV file
-# patch_grid = pd.read_csv(csv_path)
-
-# # only keep the rows where the include column is equal to True
-# patch_grid = patch_grid[patch_grid["include"] == True]
-
-# # get the x and y column as a list of (x,y) tuples
-# patch_grids = patch_grid[["x", "y"]].values.tolist()
-
-# print(f"Number of tiles: {len(patch_grid)}")
-
-# patch_grids_batches = create_list_of_batches_from_list(patch_grids, tiling_batch_size)
-
-# print(f"Number of batches: {len(patch_grids_batches)}")
-
-# tasks = {}
-# all_results = []
-# new_focus_regions = []
-
-# for i, batch in tqdm(
-#     enumerate(patch_grids_batches), desc="Tiling Tiles", total=len(patch_grids_batches)
-# ):
-#     worker = tiling_workers[i % num_tilers]
-#     task = worker.async_tile_batch.remote(batch)
-#     tasks[task] = batch
-
-# with tqdm(total=len(patch_grids), desc="Extracting features") as pbar:
-#     while tasks:
-#         done_ids, _ = ray.wait(list(tasks.keys()))
-
-#         for done_id in done_ids:
-#             try:
-#                 tensor_batches, update = ray.get(
-#                     done_id
-#                 )  # this has dimension [batch_size, feature_size]
-
-#                 all_results.extend(tensor_batches)
-
-#                 pbar.update(update)
-#             except RayTaskError as e:
-#                 print(f"Task for focus {tasks[done_id]} failed with error: {e}")
-
-#             del tasks[done_id]
-
-# print(len(all_results))
-# print(type(all_results[0]))
-# print(all_results[0].shape)
-
-
-# tile_batches = create_list_of_batches_from_list(all_results, 32)
-
-# for i, batch in tqdm(
-#     enumerate(tile_batches), desc="Stacking Tensors", total=len(tile_batches)
-# ):
-
-#     stack = torch.stack(
-#         [torch.tensor(np.array(tile)).permute(2, 0, 1) for tile in batch]
-#     )
-
 print("Creating the dataset...")
 # Create the dataset
 dataset = SVSTileDataset(
@@ -289,7 +144,7 @@ print(f"Type: {type(sample[0])}, Shape: {sample[0].shape}")
 
 
 dataloader = torch.utils.data.DataLoader(
-    dataset, batch_size=32, shuffle=True, num_workers=128
+    dataset, batch_size=batch_size, shuffle=True, num_workers=num_cpus
 )
 
 # get the first batch and print the shape
@@ -346,7 +201,6 @@ ray.shutdown()
 # ray.init(num_cpus=num_cpus, num_gpus=num_gpus)
 ray.init()
 
-num_feature_extractors = 8
 
 feature_extraction_workers = [
     UNIFeatureExtractionWorker.remote() for _ in range(num_feature_extractors)
@@ -359,7 +213,10 @@ new_focus_regions = []
 with tqdm(total=len(dataset), desc="Tiling Tiles") as pbar:
     for i, batch in enumerate(dataloader):
         worker = feature_extraction_workers[i % num_feature_extractors]
-        task = worker.async_extract_features.remote(batch)
+
+        sub_batches = batching_tensor_stack(batch, sub_batch_size)
+        for sub_batch in sub_batches:
+            task = worker.async_extract_features.remote(batch)
         tasks[task] = batch
 
         pbar.update(batch.shape[0])
